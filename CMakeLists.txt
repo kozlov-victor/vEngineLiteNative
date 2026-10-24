@@ -15,33 +15,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(DEPS "${CMAKE_CURRENT_SOURCE_DIR}/dependencies")
 
 # ============================================================
-# SDL3
-# ============================================================
-
-set(SDL_ROOT "${DEPS}/SDL")
-set(SDL_INCLUDE_DIR "${SDL_ROOT}/include")
-set(SDL_LIB_DIR "${SDL_ROOT}/lib/x64")
-
-set(SDL_DLL "${SDL_LIB_DIR}/SDL3.dll")
-set(SDL_IMPLIB "${SDL_LIB_DIR}/SDL3.lib")
-
-if(NOT EXISTS "${SDL_DLL}")
-    message(FATAL_ERROR "SDL3.dll not found: ${SDL_DLL}")
-endif()
-
-if(NOT EXISTS "${SDL_IMPLIB}")
-    message(FATAL_ERROR "SDL3.lib not found: ${SDL_IMPLIB}")
-endif()
-
-add_library(SDL3 SHARED IMPORTED GLOBAL)
-
-set_target_properties(SDL3 PROPERTIES
-        IMPORTED_IMPLIB "${SDL_IMPLIB}"
-        IMPORTED_LOCATION "${SDL_DLL}"
-        INTERFACE_INCLUDE_DIRECTORIES "${SDL_INCLUDE_DIR}"
-)
-
-# ============================================================
 # ANGLE
 # ============================================================
 
@@ -119,7 +92,6 @@ target_include_directories(vEngineLiteNative PRIVATE
 
 
 target_link_libraries(vEngineLiteNative PRIVATE
-        SDL3
         "${ANGLE_EGL_LIB}"
         "${ANGLE_GLES_LIB}"
         "${V8_MONOLITH_LIB}"
@@ -135,9 +107,12 @@ target_link_libraries(vEngineLiteNative PRIVATE
 if(MSVC)
     target_compile_options(vEngineLiteNative PRIVATE
             /Zc:__cplusplus
+            /utf-8
     )
     target_compile_definitions(vEngineLiteNative PRIVATE
             V8_COMPRESS_POINTERS
+            NOMINMAX
+            WIN32_LEAN_AND_MEAN
     )
 endif()
 
