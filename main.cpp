@@ -7,13 +7,12 @@
 #include <EGL/eglext.h>
 #include <GLES3/gl3.h>
 
-#include "JsRuntime/JsRuntime.h"
-
 #include <chrono>
-#include <filesystem>
 #include <iostream>
 
-namespace fs = std::filesystem;
+#include "v_engine/v_engine.h"
+#include "assets/bootstrap.h"
+
 using Clock = std::chrono::steady_clock;
 
 static constexpr wchar_t WINDOW_CLASS[] = L"vEngineLiteNativeWindow";
@@ -255,24 +254,23 @@ int main(int argc, char* argv[])
     const auto startTime = Clock::now();
     auto nextFrame = startTime;
 
+    VEngine vEngine(argv[0]);
+    vEngine.initV8();
+    vEngine.compileInlineScript("<inline>","innerWidth=1280;innerHeight=720;");
+    vEngine.compileInlineScript("bootstrap.js",bootstrapJs);
 
-    // Initialize JavaScript before entering the main loop.
-    const fs::path executablePath =
-            fs::absolute(fs::path(argv[0]));
-
-    const fs::path scriptPath =
-        executablePath.parent_path() / "index.js";
-
-    JsRuntime jsRuntime;
-    if (!jsRuntime.Initialize(scriptPath, executablePath)) {
-        MessageBoxW(
-            nullptr,
-            L"Помилка JavaScript. Дивись vengine.log біля EXE.",
-            L"vEngineLite Native",
-            MB_OK | MB_ICONERROR
-        );
+    auto result = vEngine.initGlobalHandlers();
+    if (!result.success) {
+        vEngine.dispose();
+        // MessageBoxW(
+        //     nullptr,
+        //     result.error.c_str(),
+        //     L"vEngineLite Native",
+        //     MB_OK | MB_ICONERROR
+        // );
         return 1;
     }
+
 
     bool running = true;
 
@@ -301,15 +299,8 @@ int main(int argc, char* argv[])
             continue;
         }
 
-        const double timestampMs =
-            std::chrono::duration<double, std::milli>(
-                now - startTime
-            ).count();
-
         // Execute JavaScript once per frame.
-        if (!jsRuntime.Tick(timestampMs)) {
-            break;
-        }
+        vEngine.updateFrame();
 
         RECT clientRect{};
         GetClientRect(window, &clientRect);
@@ -341,7 +332,7 @@ int main(int argc, char* argv[])
     }
 
     // Tear down JS while its owner is still alive.
-    jsRuntime.Shutdown();
+    vEngine.dispose();
 
     eglMakeCurrent(
         display,

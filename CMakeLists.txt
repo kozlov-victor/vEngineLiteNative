@@ -81,8 +81,16 @@ message(STATUS "V8 monolithic library: ${V8_MONOLITH_LIB}")
 
 add_executable(vEngineLiteNative
         main.cpp
-        JsRuntime/JsRuntime.cpp
-        JsRuntime/JsRuntime.h
+        app/console/Console.h app/console/Console.cpp
+        app/logger/Logger.h app/logger/Logger.win.cpp
+        app/gl/GlFields.h app/gl/GlFields.cpp
+        app/gl/GlFunctions.h app/gl/GlFunctions.cpp
+        app/js/Js.h app/js/Js.cpp
+        app/external_functions/ExternalFunctions.h app/external_functions/ExternalFunctions.win.cpp
+        app/js_compilation_result/JsCompilationResult.h app/js_compilation_result/JsCompilationResult.cpp
+        app/misc/fun.hpp
+        v_engine/v_engine.h v_engine/v_engine.cpp
+        assets/bootstrap.h
 )
 
 target_include_directories(vEngineLiteNative PRIVATE
