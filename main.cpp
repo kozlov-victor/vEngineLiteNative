@@ -258,6 +258,7 @@ int main(int argc, char* argv[])
     vEngine.initV8();
     vEngine.compileInlineScript("<inline>","innerWidth=1280;innerHeight=720;");
     vEngine.compileInlineScript("bootstrap.js",bootstrapJs);
+    vEngine.compileScriptFromUrl("index.js");
 
     auto result = vEngine.initGlobalHandlers();
     if (!result.success) {
@@ -299,9 +300,6 @@ int main(int argc, char* argv[])
             continue;
         }
 
-        // Execute JavaScript once per frame.
-        vEngine.updateFrame();
-
         RECT clientRect{};
         GetClientRect(window, &clientRect);
 
@@ -309,14 +307,16 @@ int main(int argc, char* argv[])
         const int height = clientRect.bottom - clientRect.top;
 
         if (width > 0 && height > 0) {
-            glViewport(0, 0, width, height);
-            glClearColor(0.05f, 0.08f, 0.9f, 1.0f);
-            glClear(GL_COLOR_BUFFER_BIT);
+
+            // Execute JavaScript once per frame.
+            vEngine.updateFrame();
+            // glViewport(0, 0, width, height);
+            // glClearColor(0.05f, 0.08f, 0.9f, 1.0f);
+            // glClear(GL_COLOR_BUFFER_BIT);
 
             if (!eglSwapBuffers(display, surface)) {
                 std::cerr << "eglSwapBuffers failed. EGL error: 0x"
                           << std::hex << eglGetError() << '\n';
-                running = false;
                 break;
             }
         }
