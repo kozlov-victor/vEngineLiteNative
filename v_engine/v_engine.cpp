@@ -2,9 +2,9 @@
 #include <filesystem>
 #include <iostream>
 #include <v8-version-string.h>
+#include "../app/misc/win/env.h"
 
 namespace fs = std::filesystem;
-#include "../app/misc/win/env.h"
 
 VEngine::VEngine(Env* env):env(env) {
 }
