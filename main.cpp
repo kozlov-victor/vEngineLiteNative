@@ -11,7 +11,6 @@
 #include <iostream>
 
 #include "v_engine/v_engine.h"
-#include "app/bootstrap/bootstrap.h"
 #include "app/misc/win/env.h"
 
 using Clock = std::chrono::steady_clock;
@@ -373,7 +372,7 @@ int main(int argc, char* argv[])
     vEngine = new VEngine(&env);
     vEngine->initV8();
     vEngine->compileInlineScript("<inline>","innerWidth=" + std::to_string(width) + ";innerHeight=" + std::to_string(height) + ";" );
-    vEngine->compileInlineScript("bootstrap.js",bootstrapJs);
+    vEngine->initBootstrap();
     vEngine->compileScriptFromUrl("index.js");
 
     auto result = vEngine->initGlobalHandlers();

@@ -14,6 +14,7 @@ public:
     VEngine(Env* env);
     void initV8();
     JsCompilationResult initGlobalHandlers();
+    JsCompilationResult initBootstrap();
     std::string getV8Version();
     JsCompilationResult compileInlineScript(std::string fileName, std::string source);
     JsCompilationResult compileScriptFromUrl(std::string url);

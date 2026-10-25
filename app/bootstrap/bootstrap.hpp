@@ -1,6 +1,8 @@
+#ifndef VENGINE_BOOTSTRAP_HPP
+#define VENGINE_BOOTSTRAP_HPP
 
 //language=javascript
-const char* bootstrapJs = R"JS(
+inline const char* bootstrapJs = R"JS(
 
 window = this;
 var _requestAnimationFrameGlobalCallBack = ()=>{};
@@ -313,3 +315,5 @@ alert = (msg)=>{
 })();
 
 )JS";
+
+#endif

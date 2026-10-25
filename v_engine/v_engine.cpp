@@ -3,6 +3,7 @@
 #include <iostream>
 #include <v8-version-string.h>
 #include "../app/misc/win/env.h"
+#include "../app/bootstrap/bootstrap.hpp"
 
 namespace fs = std::filesystem;
 
@@ -27,6 +28,10 @@ JsCompilationResult VEngine::initGlobalHandlers() {
         result = "no _triggerEvent function; bootstrap.h is wrong";
     }
     return JsCompilationResult(success,result);
+}
+
+JsCompilationResult VEngine::initBootstrap() {
+    return compileInlineScript("bootstrap.js", bootstrapJs);
 }
 
 std::string VEngine::getV8Version() {
