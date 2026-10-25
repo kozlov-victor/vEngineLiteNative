@@ -3,14 +3,15 @@
 #define VENGINE_V_ENGINE_H
 
 #include "../app/js/Js.h"
+#include "../app/misc/win/env.h"
 #include "../app/js_compilation_result/JsCompilationResult.h"
 
 class VEngine {
 private:
-    char* exePath;
+    Env* env;
     JsCompilationResult compileScript(std::string fileName, std::string source);
 public:
-    VEngine(char* exePath);
+    VEngine(Env* env);
     void initV8();
     JsCompilationResult initGlobalHandlers();
     std::string getV8Version();

@@ -5,13 +5,10 @@
 #include "ExternalFunctions.h"
 #include "../logger/Logger.h"
 #include "../misc/fun.hpp"
+#include "../misc/win/env.h"
+#include "../misc/win/misc.h"
 
-// MessageBoxW(
-//     nullptr,
-//     L"Помилка JavaScript. Дивись vengine.log біля EXE.",
-//     L"vEngineLite Native",
-//     MB_OK | MB_ICONERROR
-// );
+Env* envClosure;
 
 void setSurfaceWidth(const v8::FunctionCallbackInfo<v8::Value>& args) {
     auto width = getNumericParameter<int>(args, 0);
@@ -47,7 +44,17 @@ void loadBinary(const v8::FunctionCallbackInfo<v8::Value>& args) {
 }
 
 void alert(const v8::FunctionCallbackInfo<v8::Value>& args) {
-    // todo
+    if (args.Length() < 2) {
+        return;
+    }
+    v8::String::Utf8Value message(args.GetIsolate(), args[0]->ToString(args.GetIsolate()->GetCurrentContext()).ToLocalChecked());
+    v8::String::Utf8Value title(args.GetIsolate(), args[1]->ToString(args.GetIsolate()->GetCurrentContext()).ToLocalChecked());
+    MessageBoxW(
+        nullptr,
+        jsStrToWStr(message).c_str(),
+        jsStrToWStr(title).c_str(),
+        MB_OK | MB_ICONERROR
+    );
 }
 
 void texImage2D_6(const v8::FunctionCallbackInfo<v8::Value>& args) {
@@ -58,20 +65,31 @@ void setBgColor(const v8::FunctionCallbackInfo<v8::Value>& args) {
     // todo
 }
 
+void setTitle(const v8::FunctionCallbackInfo<v8::Value>& args) {
+    if (args.Length() < 1) {
+        return;
+    }
+    v8::String::Utf8Value jsArg0(args.GetIsolate(), args[0]->ToString(args.GetIsolate()->GetCurrentContext()).ToLocalChecked());
+    std::wstring title = jsStrToWStr(jsArg0);
+    SetWindowTextW(envClosure->window, title.c_str());
+}
+
 void ExternalFunctions::create(void* env, v8::Isolate *isolate, v8::Local<v8::Context> &context_local) {
+    envClosure = static_cast<Env*>(env);
     v8::Local<v8::Object> ext = v8::Object::New(isolate);
 
     std::vector<Fun> funcs = {
-        {"setSurfaceWidth", setSurfaceWidth},
-        {"getSurfaceWidth", getSurfaceWidth},
-        {"setSurfaceHeight", setSurfaceHeight},
-        {"getSurfaceHeight", getSurfaceHeight},
+        {"_setSurfaceWidth", setSurfaceWidth},
+        {"_getSurfaceWidth", getSurfaceWidth},
+        {"_setSurfaceHeight", setSurfaceHeight},
+        {"_getSurfaceHeight", getSurfaceHeight},
         {"_loadBitmap", loadBitmap},
         {"_loadString", loadString},
         {"_loadBinary", loadBinary},
         {"_texImage2D_6", texImage2D_6},
         {"_alert", alert},
         {"_setBgColor", setBgColor},
+        {"_setTitle", setTitle},
     };
 
     for(const Fun& f : funcs) {

@@ -11,12 +11,43 @@
 #include <iostream>
 
 #include "v_engine/v_engine.h"
-#include "assets/bootstrap.h"
+#include "app/bootstrap/bootstrap.h"
+#include "app/misc/win/env.h"
 
 using Clock = std::chrono::steady_clock;
 
 static constexpr wchar_t WINDOW_CLASS[] = L"vEngineLiteNativeWindow";
 static constexpr wchar_t WINDOW_TITLE[] = L"vEngineLite Native";
+
+VEngine* vEngine;
+HWND canvas;
+Env env{};
+
+static void CenterChildWindow(HWND parent, HWND child)
+{
+    RECT parentRect;
+    RECT childRect;
+
+    GetClientRect(parent, &parentRect);
+    GetWindowRect(child, &childRect);
+
+    const int parentWidth = parentRect.right - parentRect.left;
+    const int parentHeight = parentRect.bottom - parentRect.top;
+
+    const int childWidth = childRect.right - childRect.left;
+    const int childHeight = childRect.bottom - childRect.top;
+
+    const int x = (parentWidth - childWidth) / 2;
+    const int y = (parentHeight - childHeight) / 2;
+
+    SetWindowPos(
+        child,
+        nullptr,
+        x, y,
+        0, 0,
+        SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE
+    );
+}
 
 static LRESULT CALLBACK WindowProc(
     HWND hwnd,
@@ -25,20 +56,47 @@ static LRESULT CALLBACK WindowProc(
     LPARAM lParam)
 {
     switch (message) {
-    case WM_CLOSE:
-        DestroyWindow(hwnd);
-        return 0;
-
-    case WM_DESTROY:
-        PostQuitMessage(0);
-        return 0;
-
-    default:
-        return DefWindowProcW(hwnd, message, wParam, lParam);
+        case WM_CLOSE: {
+            if (!(GetWindowLongPtrW(hwnd, GWL_STYLE) & WS_CHILD)) {
+                DestroyWindow(hwnd);
+            }
+            return 0;
+        }
+        case WM_DESTROY: {
+            if (!(GetWindowLongPtrW(hwnd, GWL_STYLE) & WS_CHILD)) {
+                PostQuitMessage(0);
+            }
+            return 0;
+        }
+        case WM_SIZE: {
+            if (!canvas) return 0; // too early
+            if (!vEngine) return 0;
+            RECT clientRect{};
+            GetClientRect(hwnd, &clientRect);
+            const int width = clientRect.right - clientRect.left;
+            const int height = clientRect.bottom - clientRect.top;
+            vEngine->onResize(width, height);
+            CenterChildWindow(hwnd, canvas);
+            return 0;
+        }
+        case WM_ERASEBKGND: {
+            if (hwnd != canvas) {
+                RECT rect{};
+                GetClientRect(hwnd, &rect);
+                FillRect(
+                    reinterpret_cast<HDC>(wParam),
+                    &rect,
+                    GetSysColorBrush(COLOR_WINDOW)
+                );
+            }
+            return 0;
+        }
+        default:
+            return DefWindowProcW(hwnd, message, wParam, lParam);
     }
 }
 
-static HWND CreateAppWindow(HINSTANCE instance)
+static HWND CreateAppWindow(HINSTANCE instance, int width, int height)
 {
     WNDCLASSEXW wc{};
     wc.cbSize = sizeof(wc);
@@ -54,7 +112,7 @@ static HWND CreateAppWindow(HINSTANCE instance)
         return nullptr;
     }
 
-    RECT rect{0, 0, 1280, 720};
+    RECT rect{0, 0, width, height};
     AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE);
 
     HWND hwnd = CreateWindowExW(
@@ -83,6 +141,35 @@ static HWND CreateAppWindow(HINSTANCE instance)
     UpdateWindow(hwnd);
 
     return hwnd;
+}
+
+static HWND CreateCanvasWindow(
+    HWND parent,
+    int x,
+    int y,
+    int width,
+    int height)
+{
+    canvas = CreateWindowExW(
+        0,
+        WINDOW_CLASS,
+        nullptr,
+        WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS,
+        x,
+        y,
+        width,
+        height,
+        parent,
+        nullptr,
+        GetModuleHandleW(nullptr),
+        nullptr
+    );
+
+    if (!canvas) {
+        return nullptr;
+    }
+
+    return canvas;
 }
 
 static EGLDisplay CreateEglDisplay()
@@ -117,12 +204,31 @@ int main(int argc, char* argv[])
         return 1;
     }
 
+    const int width = 1280;
+    const int height = 720;
+
     HINSTANCE instance = GetModuleHandleW(nullptr);
-    HWND window = CreateAppWindow(instance);
+    HWND window = CreateAppWindow(instance, width, height);
 
     if (!window) {
+        std::cerr << "CreateAppWindow failed.\n";
         return 1;
     }
+
+    HWND canvasWindow = CreateCanvasWindow(
+        window,
+        0,
+        0,
+        300,
+        300
+    );
+
+    if (!canvasWindow) {
+        DestroyWindow(window);
+        UnregisterClassW(WINDOW_CLASS, instance);
+        return 1;
+    }
+    CenterChildWindow(window, canvas);
 
     // Initialize ANGLE / EGL.
     EGLDisplay display = CreateEglDisplay();
@@ -130,6 +236,7 @@ int main(int argc, char* argv[])
     if (display == EGL_NO_DISPLAY) {
         std::cerr << "Failed to get EGL display. EGL error: 0x"
                   << std::hex << eglGetError() << '\n';
+        DestroyWindow(canvasWindow);
         DestroyWindow(window);
         UnregisterClassW(WINDOW_CLASS, instance);
         return 1;
@@ -142,6 +249,7 @@ int main(int argc, char* argv[])
         std::cerr << "eglInitialize failed. EGL error: 0x"
                   << std::hex << eglGetError() << '\n';
         eglTerminate(display);
+        DestroyWindow(canvasWindow);
         DestroyWindow(window);
         UnregisterClassW(WINDOW_CLASS, instance);
         return 1;
@@ -151,6 +259,7 @@ int main(int argc, char* argv[])
         std::cerr << "eglBindAPI failed. EGL error: 0x"
                   << std::hex << eglGetError() << '\n';
         eglTerminate(display);
+        DestroyWindow(canvasWindow);
         DestroyWindow(window);
         UnregisterClassW(WINDOW_CLASS, instance);
         return 1;
@@ -179,6 +288,7 @@ int main(int argc, char* argv[])
         std::cerr << "eglChooseConfig failed. EGL error: 0x"
                   << std::hex << eglGetError() << '\n';
         eglTerminate(display);
+        DestroyWindow(canvasWindow);
         DestroyWindow(window);
         UnregisterClassW(WINDOW_CLASS, instance);
         return 1;
@@ -187,7 +297,7 @@ int main(int argc, char* argv[])
     EGLSurface surface = eglCreateWindowSurface(
         display,
         config,
-        window,
+        canvasWindow,
         nullptr
     );
 
@@ -195,6 +305,7 @@ int main(int argc, char* argv[])
         std::cerr << "eglCreateWindowSurface failed. EGL error: 0x"
                   << std::hex << eglGetError() << '\n';
         eglTerminate(display);
+        DestroyWindow(canvasWindow);
         DestroyWindow(window);
         UnregisterClassW(WINDOW_CLASS, instance);
         return 1;
@@ -217,6 +328,7 @@ int main(int argc, char* argv[])
                   << std::hex << eglGetError() << '\n';
         eglDestroySurface(display, surface);
         eglTerminate(display);
+        DestroyWindow(canvasWindow);
         DestroyWindow(window);
         UnregisterClassW(WINDOW_CLASS, instance);
         return 1;
@@ -228,6 +340,7 @@ int main(int argc, char* argv[])
         eglDestroyContext(display, context);
         eglDestroySurface(display, surface);
         eglTerminate(display);
+        DestroyWindow(canvasWindow);
         DestroyWindow(window);
         UnregisterClassW(WINDOW_CLASS, instance);
         return 1;
@@ -254,15 +367,19 @@ int main(int argc, char* argv[])
     const auto startTime = Clock::now();
     auto nextFrame = startTime;
 
-    VEngine vEngine(argv[0]);
-    vEngine.initV8();
-    vEngine.compileInlineScript("<inline>","innerWidth=1280;innerHeight=720;");
-    vEngine.compileInlineScript("bootstrap.js",bootstrapJs);
-    vEngine.compileScriptFromUrl("index.js");
+    env.window = window;
+    env.canvas = canvas;
+    env.exePath = argv[0];
+    vEngine = new VEngine(&env);
+    vEngine->initV8();
+    vEngine->compileInlineScript("<inline>","innerWidth=" + std::to_string(width) + ";innerHeight=" + std::to_string(height) + ";" );
+    vEngine->compileInlineScript("bootstrap.js",bootstrapJs);
+    vEngine->compileScriptFromUrl("index.js");
 
-    auto result = vEngine.initGlobalHandlers();
+    auto result = vEngine->initGlobalHandlers();
     if (!result.success) {
-        vEngine.dispose();
+        vEngine->dispose();
+        delete vEngine;
         // MessageBoxW(
         //     nullptr,
         //     result.error.c_str(),
@@ -271,7 +388,6 @@ int main(int argc, char* argv[])
         // );
         return 1;
     }
-
 
     bool running = true;
 
@@ -301,7 +417,7 @@ int main(int argc, char* argv[])
         }
 
         RECT clientRect{};
-        GetClientRect(window, &clientRect);
+        GetClientRect(canvasWindow, &clientRect);
 
         const int width = clientRect.right - clientRect.left;
         const int height = clientRect.bottom - clientRect.top;
@@ -309,10 +425,7 @@ int main(int argc, char* argv[])
         if (width > 0 && height > 0) {
 
             // Execute JavaScript once per frame.
-            vEngine.updateFrame();
-            // glViewport(0, 0, width, height);
-            // glClearColor(0.05f, 0.08f, 0.9f, 1.0f);
-            // glClear(GL_COLOR_BUFFER_BIT);
+            vEngine->updateFrame();
 
             if (!eglSwapBuffers(display, surface)) {
                 std::cerr << "eglSwapBuffers failed. EGL error: 0x"
@@ -332,7 +445,8 @@ int main(int argc, char* argv[])
     }
 
     // Tear down JS while its owner is still alive.
-    vEngine.dispose();
+    vEngine->dispose();
+    delete vEngine;
 
     eglMakeCurrent(
         display,
@@ -344,6 +458,10 @@ int main(int argc, char* argv[])
     eglDestroyContext(display, context);
     eglDestroySurface(display, surface);
     eglTerminate(display);
+
+    if (IsWindow(canvasWindow)) {
+        DestroyWindow(canvasWindow);
+    }
 
     if (IsWindow(window)) {
         DestroyWindow(window);

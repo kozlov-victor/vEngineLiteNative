@@ -4,14 +4,15 @@
 #include <v8-version-string.h>
 
 namespace fs = std::filesystem;
+#include "../app/misc/win/env.h"
 
-VEngine::VEngine(char* exePath):exePath(exePath) {
+VEngine::VEngine(Env* env):env(env) {
 }
 
 void VEngine::initV8() {
     js = new Js();
     js->initV8();
-    js->initGlobalObjects(nullptr);
+    js->initGlobalObjects(env);
 }
 
 JsCompilationResult VEngine::initGlobalHandlers() {
@@ -44,7 +45,7 @@ JsCompilationResult VEngine::compileInlineScript(std::string fileName, std::stri
 }
 
 JsCompilationResult VEngine::compileScriptFromUrl(std::string url) {
-    const fs::path executablePath = fs::absolute(fs::path(exePath));
+    const fs::path executablePath = fs::absolute(fs::path(env->exePath));
     const fs::path scriptPath = executablePath.parent_path() / url;
 
     // Read the script.

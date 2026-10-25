@@ -90,7 +90,9 @@ add_executable(vEngineLiteNative
         app/js_compilation_result/JsCompilationResult.h app/js_compilation_result/JsCompilationResult.cpp
         app/misc/fun.hpp
         v_engine/v_engine.h v_engine/v_engine.cpp
-        assets/bootstrap.h
+        app/bootstrap/bootstrap.h
+        app/misc/win/env.h
+        app/misc/win/misc.h app/misc/win/misc.cpp
 )
 
 target_include_directories(vEngineLiteNative PRIVATE

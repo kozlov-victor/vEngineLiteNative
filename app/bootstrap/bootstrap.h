@@ -4,10 +4,6 @@ const char* bootstrapJs = R"JS(
 
 window = this;
 var _requestAnimationFrameGlobalCallBack = ()=>{};
-window._nextTick = ()=>{
-    _requestAnimationFrameGlobalCallBack(Date.now());
-    window._taskQueue.drain();
-};
 
 
 _globalGL.texImage2D = (...args)=>{
@@ -21,7 +17,10 @@ _globalGL.texImage2D = (...args)=>{
     else throw new Error('wrong arguments for texImage2D invocation');
 }
 
-alert = (msg)=>_external._alert(msg);
+alert = (msg)=>{
+    msg= ''+msg;
+    _external._alert(msg,document.title);
+};
 
 //const glNameByName = {};
 //Object.keys(_globalGL).forEach(key=>{
@@ -87,8 +86,11 @@ alert = (msg)=>_external._alert(msg);
 
     }
 
-    window._taskQueue = new TaskQueue();
-    window._drainTaskQueue = ()=>window._taskQueue.drain();
+    const _taskQueue = new TaskQueue();
+    window._nextTick = ()=>{
+        _requestAnimationFrameGlobalCallBack(Date.now());
+        _taskQueue.drain();
+    };
 
     class CanvasStyle {
 
@@ -97,19 +99,19 @@ alert = (msg)=>_external._alert(msg);
         }
 
         set width(val){
-            _external.setSurfaceWidth(parseInt(val));
+            _external._setSurfaceWidth(parseInt(val));
         }
 
         get width(){
-            return _external.getSurfaceWidth();
+            return _external._getSurfaceWidth();
         }
 
         set height(val){
-            _external.setSurfaceHeight(parseInt(val));
+            _external._setSurfaceHeight(parseInt(val));
         }
 
         get height(){
-            return _external.getSurfaceHeight();
+            return _external._getSurfaceHeight();
         }
     }
 
@@ -189,26 +191,24 @@ alert = (msg)=>_external._alert(msg);
     const globalCanvas = new Canvas();
     _globalGL.canvas = globalCanvas;
 
-    const bodyStyle = {};
-    let bValue = undefined;
-    Object.defineProperty(bodyStyle, "backgroundColor", {
-          get() {
-                return bValue;
-          },
-          set(newValue) {
-                _external._setBgColor(newValue);
-                bValue = newValue;
-          },
-          enumerable: true,
-          configurable: true,
-    });
+    class BodyStyle {
+        _bgColor = '';
+        set backgroundColor(value) {
+            this._bgColor = value;
+            _external._setBgColor(value);
+        }
+        get backgroundColor() {
+            return this._bgColor;
+        }
+    }
 
     class Document {
+        _title = '';
         constructor(){
             this.body = {
                 appendChild:()=>{},
                 addEventListener:()=>{},
-                style: bodyStyle
+                style: new BodyStyle()
             }
         }
         createElement(val){
@@ -223,13 +223,25 @@ alert = (msg)=>_external._alert(msg);
         }
         addEventListener(){
         }
+        removeEventListener(){
+        }
+        set title(value) {
+              if (!value) value = '';
+              value = value.toString();
+              this._title = value;
+              _external._setTitle(value);
+        }
+        get title() {
+            return this._title;
+        }
     }
 
     class XMLHttpRequest {
+        status = 0;
+        url = '';
 
         constructor() {
-            this.status = 0;
-            this.url = '';
+
         }
 
         setRequestHeader(){
@@ -251,7 +263,7 @@ alert = (msg)=>_external._alert(msg);
                 this.onload && this.onload();
                 this.onreadystatechange && this.onreadystatechange();
             };
-            _taskQueue.addNextTask(()=>{ // todo
+            _taskQueue.addNextTask(()=>{
                 const resp = (this.responseType==='blob' || this.responseType==='arraybuffer')?
                     _external._loadBinary(currUrl):
                     _external._loadString(currUrl);
@@ -263,7 +275,7 @@ alert = (msg)=>_external._alert(msg);
 
         }
 
-    };
+    }
 
     window.XMLHttpRequest = XMLHttpRequest;
     window.document = new Document();
@@ -285,7 +297,7 @@ alert = (msg)=>_external._alert(msg);
     };
 
 
-    let events = [];
+    const events = [];
     window.addEventListener = (name,cb)=>{
         events.push({name:name,cb:cb});
     };
@@ -299,7 +311,5 @@ alert = (msg)=>_external._alert(msg);
     }
 
 })();
-
-console.log("bootstrap.js loaded!");
 
 )JS";

@@ -128,21 +128,26 @@ void setBgColor(const v8::FunctionCallbackInfo<v8::Value>& args) {
     envClosure->CallStaticVoidMethod(cl, m, jArg0);
 }
 
+void setTitle(const v8::FunctionCallbackInfo<v8::Value>& args) {
+    Logger::warn("setTitle not implemented for android platform");
+}
+
 void ExternalFunctions::create(void* env, v8::Isolate *isolate, v8::Local<v8::Context> &context_local) {
     v8::Local<v8::Object> ext = v8::Object::New(isolate);
     envClosure = static_cast<JNIEnv*>(env);
 
     std::vector<Fun> funcs = {
-            {"setSurfaceWidth", setSurfaceWidth},
-            {"getSurfaceWidth", getSurfaceWidth},
-            {"setSurfaceHeight", setSurfaceHeight},
-            {"getSurfaceHeight", getSurfaceHeight},
+            {"_setSurfaceWidth", setSurfaceWidth},
+            {"_getSurfaceWidth", getSurfaceWidth},
+            {"_setSurfaceHeight", setSurfaceHeight},
+            {"_getSurfaceHeight", getSurfaceHeight},
             {"_loadBitmap", loadBitmap},
             {"_loadString", loadString},
             {"_loadBinary", loadBinary},
             {"_texImage2D_6", texImage2D_6},
             {"_alert", alert},
             {"_setBgColor", setBgColor},
+            {"_setTitle", setTitle},
     };
 
     for(const Fun& f : funcs) {
