@@ -54,21 +54,21 @@ JsCompilationResult VEngine::compileScriptFromUrl(const std::string &url) {
     return compileScript(url, content);
 }
 
-void VEngine::updateFrame() {
+void VEngine::updateFrame() const {
     if (js == nullptr) {
         return;
     }
     js->callFunction(js->nextTickFunction);
 }
 
-void VEngine::onTouchEvent(std::string eventName, float x, float y, int id) {
+void VEngine::onTouchEvent(std::string eventName, float x, float y, int id) const {
     if (js == nullptr) {
         return;
     }
     js->onTouchEvent(eventName.c_str(),x,y,id);
 }
 
-void VEngine::onResize(int width, int height, bool triggerResize) {
+void VEngine::onResize(int width, int height, bool triggerResize) const {
     if (js == nullptr) {
         return;
     }

@@ -18,9 +18,9 @@ public:
     std::string getV8Version();
     JsCompilationResult compileInlineScript(std::string fileName, std::string source);
     JsCompilationResult compileScriptFromUrl(const std::string &url);
-    void updateFrame();
-    void onTouchEvent(std::string eventName, float x, float y, int id);
-    void onResize(int width, int height, bool triggerResize);
+    void updateFrame() const;
+    void onTouchEvent(std::string eventName, float x, float y, int id) const;
+    void onResize(int width, int height, bool triggerResize) const;
     void dispose();
 
 private:
