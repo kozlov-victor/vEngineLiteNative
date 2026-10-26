@@ -89,7 +89,7 @@ add_executable(vEngineLiteNative
         app/external_functions/ExternalFunctions.h app/external_functions/ExternalFunctions.win.cpp
         app/js_compilation_result/JsCompilationResult.h app/js_compilation_result/JsCompilationResult.cpp
         app/misc/fun.hpp
-        v_engine/v_engine.h v_engine/v_engine.cpp
+        app/v_engine/v_engine.h app/v_engine/v_engine.cpp
         app/bootstrap/bootstrap.hpp
         app/misc/win/env.h
         app/misc/win/misc.h app/misc/win/misc.cpp

@@ -10,7 +10,7 @@
 #include <chrono>
 #include <iostream>
 
-#include "v_engine/v_engine.h"
+#include "app/v_engine/v_engine.h"
 #include "app/misc/win/env.h"
 #include "app/misc/win/misc.h"
 #include <objbase.h>
@@ -51,7 +51,7 @@ static LRESULT CALLBACK WindowProc(
             GetClientRect(hwnd, &clientRect);
             const int width = clientRect.right - clientRect.left;
             const int height = clientRect.bottom - clientRect.top;
-            vEngine->onResize(width, height, true);
+            vEngine->onResize(width, height);
             CenterChildWindow(hwnd, canvas);
             return 0;
         }
@@ -357,16 +357,7 @@ int main(int argc, char* argv[])
     env.canvas = canvas;
     env.exePath = argv[0];
     vEngine = new VEngine(&env);
-    vEngine->initV8();
-    vEngine->onResize(initialWidth, initialWidth, false);
-    JsCompilationResult result = vEngine->initBootstrap();
-    if (!result.success) {
-        Logger::error(result.error);
-        vEngine->dispose();
-        delete vEngine;
-        return 1;
-    }
-    result = vEngine->initGlobalHandlers();
+    JsCompilationResult result = vEngine->initV8(initialWidth, initialHeight);
     if (!result.success) {
         Logger::error(result.error);
         vEngine->dispose();

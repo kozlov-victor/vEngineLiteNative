@@ -2,17 +2,21 @@
 
 #include <iostream>
 #include <v8-version-string.h>
-#include "../app/misc/win/env.h"
-#include "../app/bootstrap/bootstrap.hpp"
-#include "../app/misc/win/misc.h"
+#include "../misc/win/env.h"
+#include "../bootstrap/bootstrap.hpp"
+#include "../misc/win/misc.h"
 
-VEngine::VEngine(Env* env):env(env) {
+VEngine::VEngine(Env* env):env(env), js(new Js()) {
 }
 
-void VEngine::initV8() {
-    js = new Js();
+JsCompilationResult VEngine::initV8(const int screenWidth, const int screenHeight) {
     js->initV8();
     js->initGlobalObjects(env);
+    js->onResize(screenWidth,screenHeight,false);
+    JsCompilationResult result = initBootstrap();
+    if (!result.success) return result;
+    result = initGlobalHandlers();
+    return result;
 }
 
 JsCompilationResult VEngine::initGlobalHandlers() {
@@ -20,13 +24,13 @@ JsCompilationResult VEngine::initGlobalHandlers() {
     std::string result;
     if (!js->findFunctionByName("_nextTick",js->nextTickFunction)) {
         success = false;
-        result = "no _nextTick function; bootstrap.h is wrong";
+        result = "no _nextTick function; bootstrap script is wrong";
     }
     else if (!js->findFunctionByName("_triggerEvent", js->triggerEventFunction)) {
         success = false;
-        result = "no _triggerEvent function; bootstrap.h is wrong";
+        result = "no _triggerEvent function; bootstrap script is wrong";
     }
-    return JsCompilationResult(success,result);
+    return {success,result};
 }
 
 JsCompilationResult VEngine::initBootstrap() {
@@ -68,11 +72,11 @@ void VEngine::onTouchEvent(std::string eventName, float x, float y, int id) cons
     js->onTouchEvent(eventName.c_str(),x,y,id);
 }
 
-void VEngine::onResize(int width, int height, bool triggerResize) const {
+void VEngine::onResize(int width, int height) const {
     if (js == nullptr) {
         return;
     }
-    js->onResize(width,height,triggerResize);
+    js->onResize(width,height,true);
 }
 
 void VEngine::dispose() {

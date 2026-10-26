@@ -9,7 +9,7 @@
 
 template <typename T>
 struct FileContent {
-    bool success;
+    bool success = true;
     std::string error;
     T content;
 };
