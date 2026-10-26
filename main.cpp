@@ -12,6 +12,8 @@
 
 #include "v_engine/v_engine.h"
 #include "app/misc/win/env.h"
+#include "app/misc/win/misc.h"
+#include <objbase.h>
 
 using Clock = std::chrono::steady_clock;
 
@@ -19,34 +21,9 @@ static constexpr wchar_t WINDOW_CLASS[] = L"vEngineLiteNativeWindow";
 static constexpr wchar_t WINDOW_TITLE[] = L"vEngineLite Native";
 
 VEngine* vEngine;
+HWND window;
 HWND canvas;
 Env env{};
-
-static void CenterChildWindow(HWND parent, HWND child)
-{
-    RECT parentRect;
-    RECT childRect;
-
-    GetClientRect(parent, &parentRect);
-    GetWindowRect(child, &childRect);
-
-    const int parentWidth = parentRect.right - parentRect.left;
-    const int parentHeight = parentRect.bottom - parentRect.top;
-
-    const int childWidth = childRect.right - childRect.left;
-    const int childHeight = childRect.bottom - childRect.top;
-
-    const int x = (parentWidth - childWidth) / 2;
-    const int y = (parentHeight - childHeight) / 2;
-
-    SetWindowPos(
-        child,
-        nullptr,
-        x, y,
-        0, 0,
-        SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE
-    );
-}
 
 static LRESULT CALLBACK WindowProc(
     HWND hwnd,
@@ -68,13 +45,13 @@ static LRESULT CALLBACK WindowProc(
             return 0;
         }
         case WM_SIZE: {
-            if (!canvas) return 0; // too early
-            if (!vEngine) return 0;
+            if (!canvas || !vEngine) return 0; // too early
+            if (hwnd!=window) return 0; // this is child window
             RECT clientRect{};
             GetClientRect(hwnd, &clientRect);
             const int width = clientRect.right - clientRect.left;
             const int height = clientRect.bottom - clientRect.top;
-            vEngine->onResize(width, height);
+            vEngine->onResize(width, height, true);
             CenterChildWindow(hwnd, canvas);
             return 0;
         }
@@ -144,10 +121,10 @@ static HWND CreateAppWindow(HINSTANCE instance, int width, int height)
 
 static HWND CreateCanvasWindow(
     HWND parent,
-    int x,
-    int y,
-    int width,
-    int height)
+    const int x,
+    const int y,
+    const int width,
+    const int height)
 {
     canvas = CreateWindowExW(
         0,
@@ -203,11 +180,20 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    const int width = 1280;
-    const int height = 720;
+    HRESULT hr = CoInitializeEx(
+        nullptr,
+        COINIT_MULTITHREADED
+    );
+    if (FAILED(hr)) {
+        std::cerr << "CoInitializeEx failed.\n";
+        return -1;
+    }
+
+    const int initialWidth = 1280;
+    const int initialHeight = 720;
 
     HINSTANCE instance = GetModuleHandleW(nullptr);
-    HWND window = CreateAppWindow(instance, width, height);
+    window = CreateAppWindow(instance, initialWidth, initialHeight);
 
     if (!window) {
         std::cerr << "CreateAppWindow failed.\n";
@@ -271,6 +257,7 @@ int main(int argc, char* argv[])
         EGL_GREEN_SIZE, 8,
         EGL_BLUE_SIZE, 8,
         EGL_ALPHA_SIZE, 8,
+        EGL_DEPTH_SIZE, 24,
         EGL_NONE
     };
 
@@ -371,20 +358,26 @@ int main(int argc, char* argv[])
     env.exePath = argv[0];
     vEngine = new VEngine(&env);
     vEngine->initV8();
-    vEngine->compileInlineScript("<inline>","innerWidth=" + std::to_string(width) + ";innerHeight=" + std::to_string(height) + ";" );
-    vEngine->initBootstrap();
-    vEngine->compileScriptFromUrl("index.js");
-
-    auto result = vEngine->initGlobalHandlers();
+    vEngine->onResize(initialWidth, initialWidth, false);
+    JsCompilationResult result = vEngine->initBootstrap();
     if (!result.success) {
+        Logger::error(result.error);
         vEngine->dispose();
         delete vEngine;
-        // MessageBoxW(
-        //     nullptr,
-        //     result.error.c_str(),
-        //     L"vEngineLite Native",
-        //     MB_OK | MB_ICONERROR
-        // );
+        return 1;
+    }
+    result = vEngine->initGlobalHandlers();
+    if (!result.success) {
+        Logger::error(result.error);
+        vEngine->dispose();
+        delete vEngine;
+        return 1;
+    }
+    result = vEngine->compileScriptFromUrl("index.js");
+    if (!result.success) {
+        Logger::error(result.error);
+        vEngine->dispose();
+        delete vEngine;
         return 1;
     }
 

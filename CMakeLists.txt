@@ -93,6 +93,7 @@ add_executable(vEngineLiteNative
         app/bootstrap/bootstrap.hpp
         app/misc/win/env.h
         app/misc/win/misc.h app/misc/win/misc.cpp
+        app/misc/win/bitmap/bitmap.h app/misc/win/bitmap/bitmap.cpp
 )
 
 target_include_directories(vEngineLiteNative PRIVATE
@@ -108,6 +109,8 @@ target_link_libraries(vEngineLiteNative PRIVATE
         dbghelp
         winmm
         ws2_32
+        windowscodecs
+        ole32
 )
 
 # ============================================================

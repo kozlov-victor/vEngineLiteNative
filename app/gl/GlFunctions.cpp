@@ -1,15 +1,12 @@
 #include <v8-typed-array.h>
 #include <v8-function.h>
-#include <cstdint>
 #include <GLES2/gl2.h>
-
 #include "GlFunctions.h"
 #include "../logger/Logger.h"
 #include "../misc/fun.hpp"
 
 
 bool isArrayBuffer(const v8::FunctionCallbackInfo<v8::Value>& args, int i) {
-    v8::Isolate* isolate = args.GetIsolate();
     if (i < 0 || i >= args.Length()) {
         Logger::error("wrong index");
         return {};

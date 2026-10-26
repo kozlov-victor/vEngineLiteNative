@@ -17,10 +17,10 @@ public:
     JsCompilationResult initBootstrap();
     std::string getV8Version();
     JsCompilationResult compileInlineScript(std::string fileName, std::string source);
-    JsCompilationResult compileScriptFromUrl(std::string url);
+    JsCompilationResult compileScriptFromUrl(const std::string &url);
     void updateFrame();
     void onTouchEvent(std::string eventName, float x, float y, int id);
-    void onResize(int width, int height);
+    void onResize(int width, int height, bool triggerResize);
     void dispose();
 
 private:

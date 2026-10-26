@@ -23,7 +23,7 @@ public:
       void initGlobalObjects(void* env) const;
       JsCompilationResult compileScript(const char* fileName, const char* code) const;
       bool callFunction(const v8::Global<v8::Function>& function,int argc = 0,v8::Local<v8::Value> argv[] = nullptr) const;
-      void onResize(int width, int height) const;
+      void onResize(int width, int height, bool triggerResize) const;
       void onTouchEvent(const char* event_name, float x, float y, int id) const;
 };
 

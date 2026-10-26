@@ -8,6 +8,13 @@
 #include "../logger/Logger.h"
 
 template <typename T>
+struct FileContent {
+    bool success;
+    std::string error;
+    T content;
+};
+
+template <typename T>
 T getNumericParameter(const v8::FunctionCallbackInfo<v8::Value>& args, int i) {
     v8::Isolate* isolate = args.GetIsolate();
     if (i < 0 || i >= args.Length()) {
@@ -20,7 +27,7 @@ T getNumericParameter(const v8::FunctionCallbackInfo<v8::Value>& args, int i) {
         return T();
     }
     return static_cast<T>(value->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value());
-}
+};
 
 struct Fun {
     std::string name;

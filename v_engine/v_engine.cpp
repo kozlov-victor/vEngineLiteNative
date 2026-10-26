@@ -1,11 +1,10 @@
 #include "v_engine.h"
-#include <filesystem>
+
 #include <iostream>
 #include <v8-version-string.h>
 #include "../app/misc/win/env.h"
 #include "../app/bootstrap/bootstrap.hpp"
-
-namespace fs = std::filesystem;
+#include "../app/misc/win/misc.h"
 
 VEngine::VEngine(Env* env):env(env) {
 }
@@ -49,28 +48,10 @@ JsCompilationResult VEngine::compileInlineScript(std::string fileName, std::stri
     return compileScript(fileName, source);
 }
 
-JsCompilationResult VEngine::compileScriptFromUrl(std::string url) {
-    const fs::path executablePath = fs::absolute(fs::path(env->exePath));
-    const fs::path scriptPath = executablePath.parent_path() / url;
-
-    // Read the script.
-    std::ifstream file(scriptPath, std::ios::binary);
-    if (!file.is_open()) {
-        std::cerr << "Cannot open JavaScript file: "
-                  << scriptPath.string() << '\n';
-        return JsCompilationResult(false,"no file: " + url);
-    }
-    std::string source{
-        std::istreambuf_iterator<char>{file},
-        std::istreambuf_iterator<char>{}
-    };
-    if (source.size() >
-        static_cast<size_t>(std::numeric_limits<int>::max())) {
-        std::cerr << "JavaScript file is too large.\n";
-        return JsCompilationResult(false,"JavaScript file is too large: " + url);
-    }
-
-    return compileScript(url, source);
+JsCompilationResult VEngine::compileScriptFromUrl(const std::string &url) {
+    auto [success, error, content] = loadFileAsString(env, url);
+    if (!success) return {false, error};
+    return compileScript(url, content);
 }
 
 void VEngine::updateFrame() {
@@ -87,11 +68,11 @@ void VEngine::onTouchEvent(std::string eventName, float x, float y, int id) {
     js->onTouchEvent(eventName.c_str(),x,y,id);
 }
 
-void VEngine::onResize(int width, int height) {
+void VEngine::onResize(int width, int height, bool triggerResize) {
     if (js == nullptr) {
         return;
     }
-    js->onResize(width,height);
+    js->onResize(width,height,triggerResize);
 }
 
 void VEngine::dispose() {

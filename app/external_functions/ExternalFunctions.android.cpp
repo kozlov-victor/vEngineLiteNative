@@ -113,8 +113,8 @@ void alert(const v8::FunctionCallbackInfo<v8::Value>& args) {
 
 void texImage2D_6(const v8::FunctionCallbackInfo<v8::Value>& args) {
     auto target = getNumericParameter<int>(args, 0);
-    auto level = getNumericParameter<int>(args, 1);;
-    auto bitmap = getNumericParameter<int>(args, 5);;
+    auto level = getNumericParameter<int>(args, 1);
+    auto bitmap = getNumericParameter<int>(args, 5);
     jclass cl = envClosure->FindClass("com/vengine/engine/VEngine");
     jmethodID m = envClosure->GetStaticMethodID(cl, "getBitmap", "(III)V");
     envClosure->CallStaticVoidMethod(cl,m,target,level,bitmap);

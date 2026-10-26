@@ -5,8 +5,6 @@
 inline const char* bootstrapJs = R"JS(
 
 window = this;
-var _requestAnimationFrameGlobalCallBack = ()=>{};
-
 
 _globalGL.texImage2D = (...args)=>{
     if (args.length===9) {
@@ -88,7 +86,11 @@ alert = (msg)=>{
 
     }
 
+    var _requestAnimationFrameGlobalCallBack = ()=>{};
     const _taskQueue = new TaskQueue();
+    window.requestAnimationFrame = (fn)=>{
+        _requestAnimationFrameGlobalCallBack = fn;
+    };
     window._nextTick = ()=>{
         _requestAnimationFrameGlobalCallBack(Date.now());
         _taskQueue.drain();
@@ -269,7 +271,7 @@ alert = (msg)=>{
                 const resp = (this.responseType==='blob' || this.responseType==='arraybuffer')?
                     _external._loadBinary(currUrl):
                     _external._loadString(currUrl);
-                successCallback(resp);
+                if (resp!==undefined) successCallback(resp);
             });
         }
 
@@ -294,10 +296,6 @@ alert = (msg)=>{
     window.setTimeout = ()=>{};
     window.setInterval = ()=>{};
     window.scrollTo = ()=>{};
-    window.requestAnimationFrame = (fn)=>{
-        _requestAnimationFrameGlobalCallBack = fn;
-    };
-
 
     const events = [];
     window.addEventListener = (name,cb)=>{

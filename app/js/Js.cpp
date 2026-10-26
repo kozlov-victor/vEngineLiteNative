@@ -105,7 +105,6 @@ void Js::initGlobalObjects(void* env) const {
 }
 
 JsCompilationResult Js::compileScript(const char* fileName, const char* code) const {
-    Logger::info("script compiling");
     v8::Isolate::Scope isolate_scope(isolate);
     v8::HandleScope handle_scope(isolate);
 
@@ -135,7 +134,6 @@ JsCompilationResult Js::compileScript(const char* fileName, const char* code) co
             return reportError(isolate,tryCatch,context_local,"evaluation error");
         }
         else {
-            Logger::info("js script compiled");
             JsCompilationResult success(true,"");
             return success;
         }
@@ -252,7 +250,7 @@ bool Js::callFunction(const v8::Global<v8::Function>& function, int argc, v8::Lo
     return true;
 }
 
-void Js::onResize(int width, int height) const {
+void Js::onResize(int width, int height, bool triggerResize) const {
     v8::Isolate::Scope isolate_scope(isolate);
     v8::HandleScope handle_scope(isolate);
     v8::Handle<v8::Context> context_local =
@@ -271,10 +269,12 @@ void Js::onResize(int width, int height) const {
         v8::Integer::New(isolate,height)
     ).Check();
 
-    v8::Local<v8::Value> argv[] = {
-        v8::String::NewFromUtf8(isolate,"resize").ToLocalChecked()
-    };
-    callFunction(triggerEventFunction,1,argv);
+    if (triggerResize) {
+        v8::Local<v8::Value> argv[] = {
+            v8::String::NewFromUtf8(isolate,"resize").ToLocalChecked()
+        };
+        callFunction(triggerEventFunction,1,argv);
+    }
 }
 
 void Js::onTouchEvent(const char *event_name, float x, float y, int id) const {
