@@ -2,6 +2,7 @@
 #include <v8-function.h>
 #include <GLES2/gl2.h>
 #include "GlFunctions.h"
+#include "GlFields.h"
 #include "../logger/Logger.h"
 #include "../misc/fun.hpp"
 
@@ -790,6 +791,10 @@ void linkProgram(const v8::FunctionCallbackInfo<v8::Value>& args) {
 void pixelStorei(const v8::FunctionCallbackInfo<v8::Value>& args) {
     GLenum pname = getGlIntParameter(args,0);
     if (pname==GL_NONE) return;
+    if (pname==GlFields::UNPACK_PREMULTIPLY_ALPHA_WEBGL) {
+        GlFunctions::premultiply_alpha_webgl = getBoolParameter(args,1);
+        return;
+    }
     GLint param = getGlIntParameter(args,1);
     glPixelStorei(pname,param);
 }
@@ -1132,6 +1137,8 @@ void texImage2D_9(const v8::FunctionCallbackInfo<v8::Value>& args) {
         glTexImage2D(target,level,internalformat,width,height,border,format,type,pixels);
     }
 }
+
+bool GlFunctions::premultiply_alpha_webgl = false;
 
 void GlFunctions::create(v8::Isolate *isolate,v8::Local<v8::Context> &context_local, v8::Local<v8::Object> &gl) {
 

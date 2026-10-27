@@ -24,6 +24,7 @@ public:
     static FileContent<Bitmap> loadBitmap(const fs::path& path);
 private:
     std::unordered_map<int, Bitmap> bitmaps;
+    static void premultiplyAlphaRGBA(Bitmap& bitmap);
 };
 
 #endif

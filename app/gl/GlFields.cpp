@@ -8,11 +8,12 @@ struct Field {
     int value;
 };
 
+const int GlFields::UNPACK_PREMULTIPLY_ALPHA_WEBGL = -1;
 
 void GlFields::create(v8::Isolate *isolate,v8::Local<v8::Context> &context_local, v8::Local<v8::Object> &gl) {
     std::vector<Field> fields =
             {
-                    {"UNPACK_PREMULTIPLY_ALPHA_WEBGL",               GL_NONE},
+                    {"UNPACK_PREMULTIPLY_ALPHA_WEBGL",               UNPACK_PREMULTIPLY_ALPHA_WEBGL},
                     {"UNPACK_FLIP_Y_WEBGL",                          GL_NONE},
                     {"DEPTH_BUFFER_BIT",                             GL_DEPTH_BUFFER_BIT},
                     {"STENCIL_BUFFER_BIT",                           GL_STENCIL_BUFFER_BIT},
@@ -321,7 +322,7 @@ void GlFields::create(v8::Isolate *isolate,v8::Local<v8::Context> &context_local
         gl->Set(
                 context_local,
                 v8::String::NewFromUtf8(isolate, f.name.c_str()).ToLocalChecked(),
-                v8::Integer::NewFromUnsigned(isolate, f.value)
+                v8::Integer::New(isolate, f.value)
         ).Check();
     }
 }

@@ -57,7 +57,7 @@ void loadBitmap(const v8::FunctionCallbackInfo<v8::Value>& args) {
     v8::Local<v8::Object> result = v8::Object::New(args.GetIsolate());
     result->Set(
             args.GetIsolate()->GetCurrentContext(),
-            v8::String::NewFromUtf8(args.GetIsolate(), "id").ToLocalChecked(),
+            v8::String::NewFromUtf8(args.GetIsolate(), "$id").ToLocalChecked(),
             v8::Integer::NewFromUnsigned(args.GetIsolate(), id)
     ).Check();
     result->Set(

@@ -1,6 +1,4 @@
 
-#define WIN32_LEAN_AND_MEAN
-
 #include <windows.h>
 
 #include <EGL/egl.h>
@@ -53,18 +51,20 @@ static LRESULT CALLBACK WindowProc(
             const int width = clientRect.right - clientRect.left;
             const int height = clientRect.bottom - clientRect.top;
             vEngine->onResize(width, height);
-            CenterChildWindow(hwnd, canvas);
+            centerChildWindow(hwnd, canvas);
             return 0;
         }
         case WM_ERASEBKGND: {
             if (hwnd != canvas) {
                 RECT rect{};
                 GetClientRect(hwnd, &rect);
+                const HBRUSH brush = CreateSolidBrush(RGB(env.background.r, env.background.g, env.background.b));
                 FillRect(
                     reinterpret_cast<HDC>(wParam),
                     &rect,
-                    GetSysColorBrush(COLOR_WINDOW)
+                    brush
                 );
+                DeleteObject(brush);
             }
             return 0;
         }
@@ -230,7 +230,7 @@ int main(int argc, char* argv[])
         UnregisterClassW(WINDOW_CLASS, instance);
         return 1;
     }
-    CenterChildWindow(window, canvas);
+    centerChildWindow(window, canvas);
 
     // Initialize ANGLE / EGL.
     EGLDisplay display = CreateEglDisplay();

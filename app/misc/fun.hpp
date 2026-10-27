@@ -27,7 +27,21 @@ T getNumericParameter(const v8::FunctionCallbackInfo<v8::Value>& args, int i) {
         return T();
     }
     return static_cast<T>(value->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value());
-};
+}
+
+inline bool getBoolParameter(const v8::FunctionCallbackInfo<v8::Value>& args, int i) {
+    v8::Isolate* isolate = args.GetIsolate();
+    if (i < 0 || i >= args.Length()) {
+        Logger::error("wrong parameter index",i);
+        return false;
+    }
+    v8::Local<v8::Value> value = args[i];
+    if (!value->IsBoolean()) {
+        Logger::error("not a numeric parameter");
+        return false;
+    }
+    return value->ToBoolean(isolate)->Value();
+}
 
 struct Fun {
     std::string name;

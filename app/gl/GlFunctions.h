@@ -7,6 +7,7 @@
 
 class GlFunctions {
 public:
+    static bool premultiply_alpha_webgl;
     static void create(v8::Isolate *isolate,v8::Local<v8::Context> &context_local,v8::Local<v8::Object> &gl);
 };
 

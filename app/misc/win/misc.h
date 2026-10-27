@@ -10,6 +10,7 @@
 std::wstring jsStrToWStr(const v8::String::Utf8Value& utf8);
 FileContent<std::string> loadFileAsString(const Env* env, const std::string &fileName);
 FileContent<Bitmap> loadBitmap(const Env* env, const std::string& fileName);
-void CenterChildWindow(HWND parent, HWND child);
+void centerChildWindow(HWND parent, HWND child);
+bool parseCssColor(const std::string& color, V_COLOR& result);
 
 #endif

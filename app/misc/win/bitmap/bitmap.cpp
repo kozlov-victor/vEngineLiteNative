@@ -2,6 +2,7 @@
 #include "bitmap.h"
 #include <wincodec.h>
 #include "../../fun.hpp"
+#include  "../../../app/gl//GlFunctions.h"
 
 Bitmap* BitmapCache::get(int id) {
     const auto it = bitmaps.find(id);
@@ -115,6 +116,26 @@ FileContent<Bitmap> BitmapCache::loadBitmap(const fs::path &path) {
      if (FAILED(hr)) {
          return {false,{}};
      }
-
+     if (GlFunctions::premultiply_alpha_webgl) {
+         premultiplyAlphaRGBA(bitmap);
+     }
      return {true, "", bitmap};
+}
+
+void BitmapCache::premultiplyAlphaRGBA(Bitmap &bitmap) {
+    // RGBA: 4 bytes per pixel.
+    for (std::size_t i = 0; i + 3 < bitmap.pixels.size(); i += 4)
+    {
+        const unsigned int alpha = bitmap.pixels[i + 3];
+
+        bitmap.pixels[i]     = static_cast<std::uint8_t>(
+            (bitmap.pixels[i   ]  * alpha + 127) / 255
+        );
+        bitmap.pixels[i + 1] = static_cast<std::uint8_t>(
+            (bitmap.pixels[i + 1] * alpha + 127) / 255
+        );
+        bitmap.pixels[i + 2] = static_cast<std::uint8_t>(
+            (bitmap.pixels[i + 2] * alpha + 127) / 255
+        );
+    }
 }

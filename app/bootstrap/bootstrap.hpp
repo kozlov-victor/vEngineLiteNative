@@ -91,10 +91,6 @@ alert = (msg)=>{
     window.requestAnimationFrame = (fn)=>{
         _requestAnimationFrameGlobalCallBack = fn;
     };
-    window._nextTick = ()=>{
-        _requestAnimationFrameGlobalCallBack(Date.now());
-        _taskQueue.drain();
-    };
 
     class CanvasStyle {
 
@@ -166,9 +162,9 @@ alert = (msg)=>{
         set src(val){
             this._src = val;
             _taskQueue.addNextTask(()=>{
-                const {id,width,height} = _external._loadBitmap(val);
-                if (id!==0) {
-                    this._bitmap = {$id:id};
+                const {$id,width,height} = _external._loadBitmap(val);
+                if ($id!==0) {
+                    this._bitmap = {$id};
                     this.width = width;
                     this.height = height;
                     this._onload && this._onload();
@@ -309,6 +305,41 @@ alert = (msg)=>{
             if (it.name===name) it.cb(arg);
         });
     }
+
+    const timers = new Map();
+    let nextTimerId = 1;
+
+    window.setTimeout = (callback, delay = 0, ...args) => {
+        const id = nextTimerId++;
+        timers.set(id, {
+            callback,
+            args,
+            dueTime: performance.now() + Math.max(0, Number(delay) || 0)
+        });
+        return id;
+    };
+
+    globalThis.clearTimeout = (id) => {
+        timers.delete(id);
+    };
+
+    function _processTimers() {
+        const now = performance.now();
+
+        for (const [id, timer] of timers) {
+            if (timer.dueTime <= now) {
+                timers.delete(id);
+                timer.callback(...timer.args);
+            }
+        }
+    }
+
+    window._nextTick = ()=>{
+        _requestAnimationFrameGlobalCallBack(Date.now());
+        _taskQueue.drain();
+        _processTimers();
+    };
+
 
 })();
 
