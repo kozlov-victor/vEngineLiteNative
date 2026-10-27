@@ -2,11 +2,9 @@
 
 #include <iostream>
 #include <v8-version-string.h>
-#include "../misc/win/env.h"
 #include "../bootstrap/bootstrap.hpp"
-#include "../misc/win/misc.h"
 
-VEngine::VEngine(Env* env):env(env), js(new Js()) {
+VEngine::VEngine(void* env):env(env), js(new Js()) {
 }
 
 JsCompilationResult VEngine::initV8(const int screenWidth, const int screenHeight) {
@@ -34,28 +32,18 @@ JsCompilationResult VEngine::initGlobalHandlers() {
 }
 
 JsCompilationResult VEngine::initBootstrap() {
-    return compileInlineScript("bootstrap.js", bootstrapJs);
+    return compileScript("bootstrap.js", bootstrapJs);
 }
 
 std::string VEngine::getV8Version() {
     return V8_VERSION_STRING;
 }
 
-JsCompilationResult VEngine::compileScript(std::string fileName, std::string source) {
+JsCompilationResult VEngine::compileScript(const std::string &fileName, const std::string& source) const {
     return
         js->compileScript(fileName.c_str(),
             source.c_str()
         );
-}
-
-JsCompilationResult VEngine::compileInlineScript(std::string fileName, std::string source) {
-    return compileScript(fileName, source);
-}
-
-JsCompilationResult VEngine::compileScriptFromUrl(const std::string &url) {
-    auto [success, error, content] = loadFileAsString(env, url);
-    if (!success) return {false, error};
-    return compileScript(url, content);
 }
 
 void VEngine::updateFrame() const {
@@ -65,14 +53,21 @@ void VEngine::updateFrame() const {
     js->callFunction(js->nextTickFunction);
 }
 
-void VEngine::onTouchEvent(std::string eventName, float x, float y, int id) const {
+void VEngine::onTouchEvent(const std::string_view eventName, float x, float y, int id) const {
     if (js == nullptr) {
         return;
     }
-    js->onTouchEvent(eventName.c_str(),x,y,id);
+    js->onTouchEvent(eventName.data(),x,y,id);
 }
 
-void VEngine::onResize(int width, int height) const {
+void VEngine::onKeyUpDown(const std::string_view keyCode, const bool down) const {
+    if (js == nullptr) {
+        return;
+    }
+    js->onKeyUpDown(keyCode.data(),down);
+}
+
+void VEngine::onResize(const int width, const int height) const {
     if (js == nullptr) {
         return;
     }

@@ -13,6 +13,7 @@
 #include "app/v_engine/v_engine.h"
 #include "app/misc/win/env.h"
 #include "app/misc/win/misc.h"
+#include "app/misc/win/keyboard/keyboard.h"
 #include <objbase.h>
 
 using Clock = std::chrono::steady_clock;
@@ -65,6 +66,22 @@ static LRESULT CALLBACK WindowProc(
                     GetSysColorBrush(COLOR_WINDOW)
                 );
             }
+            return 0;
+        }
+        case WM_KEYDOWN:
+        case WM_SYSKEYDOWN:
+        {
+            if (!vEngine) return 0;
+            const std::string_view code = getKeyboardCode(lParam);
+            vEngine->onKeyUpDown(code,true);
+            return 0;
+        }
+        case WM_KEYUP:
+        case WM_SYSKEYUP:
+        {
+            if (!vEngine) return 0;
+            const std::string_view code = getKeyboardCode(lParam);
+            vEngine->onKeyUpDown(code,false);
             return 0;
         }
         default:
@@ -364,7 +381,15 @@ int main(int argc, char* argv[])
         delete vEngine;
         return 1;
     }
-    result = vEngine->compileScriptFromUrl("index.js");
+
+    auto [success, error, content] = loadFileAsString(&env, "index.js");
+    if (!success) {
+        Logger::error(result.error);
+        vEngine->dispose();
+        delete vEngine;
+        return 1;
+    };
+    result = vEngine->compileScript("index.js", content);
     if (!result.success) {
         Logger::error(result.error);
         vEngine->dispose();
@@ -372,23 +397,17 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    bool running = true;
 
-    while (running) {
+    while (true) {
         MSG message{};
 
         while (PeekMessageW(&message, nullptr, 0, 0, PM_REMOVE)) {
             if (message.message == WM_QUIT) {
-                running = false;
                 break;
             }
 
             TranslateMessage(&message);
             DispatchMessageW(&message);
-        }
-
-        if (!running) {
-            break;
         }
 
         const auto now = Clock::now();

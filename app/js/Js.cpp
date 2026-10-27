@@ -346,6 +346,35 @@ void Js::onTouchEvent(const char *event_name, float x, float y, int id) const {
 
 }
 
+
+void Js::onKeyUpDown(const char *keyCode, bool down) const {
+    v8::Isolate::Scope isolate_scope(isolate);
+    v8::HandleScope handle_scope(isolate);
+    v8::Handle<v8::Context> context_local =
+            v8::Local<v8::Context>::New(isolate, persistentContext->Get(isolate));
+    v8::Context::Scope context_scope(context_local);
+    v8::TryCatch tryCatch(isolate);
+
+    v8::Local<v8::Object> event = v8::Object::New(isolate);
+    event->Set(
+        context_local,
+        v8::String::NewFromUtf8(isolate, "preventDefault").ToLocalChecked(),
+        v8::Function::New(context_local,[](auto){}).ToLocalChecked()
+    ).Check();
+    event->Set(
+        context_local,
+        v8::String::NewFromUtf8(isolate, "code").ToLocalChecked(),
+        v8::String::NewFromUtf8(isolate, keyCode).ToLocalChecked()
+    ).Check();
+
+    v8::Local<v8::Value> argv[] = {
+        v8::String::NewFromUtf8(isolate,down?"keydown":"keyup").ToLocalChecked(),
+        event
+    };
+    callFunction(triggerEventFunction,2,argv);
+}
+
+
 Js::~Js() {
     // Спершу треба зупинити всі потоки, які можуть звертатися до V8,
     // і дочекатися завершення їхньої роботи.

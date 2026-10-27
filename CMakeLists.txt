@@ -94,6 +94,7 @@ add_executable(vEngineLiteNative
         app/misc/win/env.h
         app/misc/win/misc.h app/misc/win/misc.cpp
         app/misc/win/bitmap/bitmap.h app/misc/win/bitmap/bitmap.cpp
+        app/misc/win/keyboard/keyboard.h app/misc/win/keyboard/keyboard.cpp
 )
 
 target_include_directories(vEngineLiteNative PRIVATE
