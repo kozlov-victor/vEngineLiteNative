@@ -2,13 +2,17 @@
 #include <v8-context.h>
 
 #include <jni.h>
-#include "ExternalFunctions.h"
-#include "../logger/Logger.h"
-#include "../misc/fun.hpp"
-#include "../misc/android/misc.h"
+#include "../ExternalFunctions.h"
+#include "../../logger/Logger.h"
+#include "../../misc/fun.hpp"
+#include "../../misc/android/misc.h"
 
 JNIEnv *envClosure;
 
+namespace ExternalFunctionImpl {
+    void createEnvironmentClosure(void* env) {
+    envClosure = static_cast<JNIEnv*>(env);
+}
 
 void setSurfaceWidth(const v8::FunctionCallbackInfo<v8::Value>& args) {
     auto width = getNumericParameter<int>(args, 0);
@@ -132,35 +136,7 @@ void setTitle(const v8::FunctionCallbackInfo<v8::Value>& args) {
     Logger::warn("setTitle not implemented for android platform");
 }
 
-void ExternalFunctions::create(void* env, v8::Isolate *isolate, v8::Local<v8::Context> &context_local) {
-    v8::Local<v8::Object> ext = v8::Object::New(isolate);
-    envClosure = static_cast<JNIEnv*>(env);
-
-    std::vector<Fun> funcs = {
-            {"_setSurfaceWidth", setSurfaceWidth},
-            {"_getSurfaceWidth", getSurfaceWidth},
-            {"_setSurfaceHeight", setSurfaceHeight},
-            {"_getSurfaceHeight", getSurfaceHeight},
-            {"_loadBitmap", loadBitmap},
-            {"_loadString", loadString},
-            {"_loadBinary", loadBinary},
-            {"_texImage2D_6", texImage2D_6},
-            {"_alert", alert},
-            {"_setBgColor", setBgColor},
-            {"_setTitle", setTitle},
-    };
-
-    for(const Fun& f : funcs) {
-        ext->Set(
-            context_local,
-            v8::String::NewFromUtf8(isolate, f.name.c_str()).ToLocalChecked(),
-            v8::Function::New(context_local, f.value).ToLocalChecked()
-        ).Check();
-    }
-
-    context_local->Global()->Set(
-        context_local,
-        v8::String::NewFromUtf8(isolate, "_external").ToLocalChecked(),
-        ext
-    ).Check();
+void getTitle(const v8::FunctionCallbackInfo<v8::Value>& args) {
+    Logger::warn("getTitle not implemented for android platform");
+}
 }

@@ -86,7 +86,9 @@ add_executable(vEngineLiteNative
         app/gl/GlFields.h app/gl/GlFields.cpp
         app/gl/GlFunctions.h app/gl/GlFunctions.cpp
         app/js/Js.h app/js/Js.cpp
-        app/external_functions/ExternalFunctions.h app/external_functions/ExternalFunctions.win.cpp
+        app/external_functions/ExternalFunctions.h app/external_functions/ExternalFunctions.cpp
+        app/external_functions/external_functions_impl/ExternalFunctionsImpl.h
+        app/external_functions/external_functions_impl/ExternalFunctionsImpl.win.cpp
         app/js_compilation_result/JsCompilationResult.h app/js_compilation_result/JsCompilationResult.cpp
         app/misc/fun.hpp
         app/v_engine/v_engine.h app/v_engine/v_engine.cpp

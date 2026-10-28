@@ -203,7 +203,6 @@ alert = (msg)=>{
     }
 
     class Document {
-        _title = '';
         constructor(){
             this.body = {
                 appendChild:()=>{},
@@ -228,11 +227,10 @@ alert = (msg)=>{
         set title(value) {
               if (!value) value = '';
               value = value.toString();
-              this._title = value;
               _external._setTitle(value);
         }
         get title() {
-            return this._title;
+            return _external._getTitle();
         }
     }
 
