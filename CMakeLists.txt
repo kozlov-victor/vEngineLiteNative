@@ -182,24 +182,29 @@ if(MSVC)
 endif()
 
 # ============================================================
-# Copy runtime DLLs next to executable
+# Copy runtime DLLs into dll directory
 # ============================================================
+
+set(DLL_OUTPUT_DIR "$<TARGET_FILE_DIR:vEngineLiteNative>/dll")
 
 add_custom_command(TARGET vEngineLiteNative POST_BUILD
 
+        COMMAND "${CMAKE_COMMAND}" -E make_directory
+        "${DLL_OUTPUT_DIR}"
+
         COMMAND "${CMAKE_COMMAND}" -E copy_if_different
         "$<TARGET_FILE:vEngineRuntime>"
-        "$<TARGET_FILE_DIR:vEngineLiteNative>"
+        "${DLL_OUTPUT_DIR}"
 
         COMMAND "${CMAKE_COMMAND}" -E copy_if_different
         "${ANGLE_EGL_DLL}"
-        "$<TARGET_FILE_DIR:vEngineLiteNative>"
+        "${DLL_OUTPUT_DIR}"
 
         COMMAND "${CMAKE_COMMAND}" -E copy_if_different
         "${ANGLE_GLES_DLL}"
-        "$<TARGET_FILE_DIR:vEngineLiteNative>"
+        "${DLL_OUTPUT_DIR}"
 
-        COMMENT "Copying runtime DLLs"
+        COMMENT "Copying runtime DLLs into dll directory"
 
         VERBATIM
 )
