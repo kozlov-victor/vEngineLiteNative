@@ -1,11 +1,5 @@
 
-
-1
 https://github.com/kubuszok/sge-angle-natives/releases
 angle-windows-x86_64.tar.gz розпаковуємо, папки include, lib кидаємо в dependencies/angle
-
-2
-https://libsdl.org/release/
-SDL3-devel-3.4.18-VC.zip розпаковуємо, папки include, lib кидаємо в dependencies/SDL
 
 
