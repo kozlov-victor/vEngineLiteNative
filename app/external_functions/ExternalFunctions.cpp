@@ -1,11 +1,8 @@
 #include <v8-function.h>
 #include <v8-context.h>
 
-
 #include "ExternalFunctions.h"
 #include "../misc/fun.hpp"
-#include "../misc/win/misc.h"
-#include "../misc/win/bitmap/bitmap.h"
 #include "external_functions_impl/ExternalFunctionsImpl.h"
 
 
