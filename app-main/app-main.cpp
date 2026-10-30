@@ -20,13 +20,8 @@ using Clock = std::chrono::steady_clock;
 static constexpr wchar_t WINDOW_CLASS[] = L"vEngineLiteNativeWindow";
 static constexpr wchar_t WINDOW_TITLE[] = L"vEngineLite Native";
 
-constexpr double targetFps = 60.0;
-
-constexpr auto frameDuration =
-    std::chrono::duration_cast<Clock::duration>(
-        std::chrono::duration<double>(1.0 / targetFps)
-    );
-std::chrono::time_point<std::chrono::steady_clock> nextFrame;
+constexpr long targetFps = 60;
+constexpr long long frameDuration = 1000 / targetFps;
 
 VEngine* vEngine;
 HINSTANCE instance;
@@ -71,7 +66,7 @@ static LRESULT CALLBACK WindowProc(
             if (hwnd != canvas) {
                 RECT rect{};
                 GetClientRect(hwnd, &rect);
-                const HBRUSH brush = CreateSolidBrush(RGB(env.background.r, env.background.g, env.background.b));
+                const auto brush = CreateSolidBrush(RGB(env.background.r, env.background.g, env.background.b));
                 FillRect(
                     reinterpret_cast<HDC>(wParam),
                     &rect,
@@ -374,29 +369,22 @@ bool createAppWindow(char* argv[]) {
         std::cerr << "script compilation error";
         return false;
     }
-    nextFrame = Clock::now();
     return true;
 }
 
 
 bool updateAppWindow() {
-    MSG message{};
+    const auto now = std::chrono::duration_cast<std::chrono::milliseconds>(
+        Clock::now().time_since_epoch()
+    ).count();
 
+    MSG message{};
     while (PeekMessageW(&message, nullptr, 0, 0, PM_REMOVE)) {
         if (message.message == WM_QUIT) {
             return false;
         }
-
         TranslateMessage(&message);
         DispatchMessageW(&message);
-    }
-
-    const auto now = Clock::now();
-
-    // Wait until the next scheduled frame.
-    if (now < nextFrame) {
-        Sleep(1);
-        return true;
     }
 
     RECT clientRect{};
@@ -416,15 +404,13 @@ bool updateAppWindow() {
             return false;
         }
     }
+    const auto afterFrame = std::chrono::duration_cast<std::chrono::milliseconds>(
+        Clock::now().time_since_epoch()
+    ).count();
+    const auto deltaFrame = afterFrame - now;
+    const auto deltaSleep = frameDuration - deltaFrame;
+    if (deltaSleep > 0) Sleep(deltaSleep);
 
-    // Maintain a 60 FPS schedule without catch-up bursts.
-    nextFrame += frameDuration;
-
-    const auto afterFrame = Clock::now();
-
-    while (nextFrame <= afterFrame) {
-        nextFrame += frameDuration;
-    }
     return true;
 }
 
