@@ -76,14 +76,11 @@ void Js::initV8() {
     // attach the context to the persistent context, to avoid V8 GC-ing it
     persistentContext = new v8::Persistent<v8::Context>();
     persistentContext->Reset(isolate, context);
-    Logger::info("V8 is ready");
-    Logger::info("V8 version is");
-    Logger::info(V8_VERSION_STRING);
+    Logger::info(std::string("V8 js version:") + V8_VERSION_STRING);
 
 }
 
 void Js::initGlobalObjects(void* env) const {
-    Logger::info("init global objects");
     v8::Isolate::Scope isolate_scope(isolate);
     v8::HandleScope handle_scope(isolate);
 

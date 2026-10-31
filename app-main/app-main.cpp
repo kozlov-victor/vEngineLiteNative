@@ -13,7 +13,7 @@
 #include "../app/misc/win/misc.h"
 #include "../app/misc/win/keyboard/keyboard.h"
 #include "app-main.h"
-#include "VJsonLite.h"
+#include "json/VJsonLite.h"
 
 
 using Clock = std::chrono::steady_clock;
