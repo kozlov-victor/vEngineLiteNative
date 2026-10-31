@@ -355,12 +355,11 @@ bool createAppWindow(char* argv[]) {
 
     auto [success, error, content] = loadFileAsString(&env, "index.js");
     if (!success) {
-        Logger::error(result.error);
+        Logger::error(error);
         vEngine->dispose();
         delete vEngine;
-        std::cerr << "script loading error";
         return false;
-    };
+    }
     result = vEngine->compileScript("index.js", content);
     if (!result.success) {
         Logger::error(result.error);

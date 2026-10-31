@@ -1,3 +1,4 @@
+
 cmake_minimum_required(VERSION 4.0)
 
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
@@ -64,6 +65,9 @@ endif()
 if(NOT EXISTS "${V8_MONOLITH_LIB}")
     message(FATAL_ERROR "V8 static library not found")
 endif()
+
+message(STATUS "V8 include directory: ${V8_INCLUDE_DIR}")
+message(STATUS "V8 monolithic library: ${V8_MONOLITH_LIB}")
 
 # ============================================================
 # Runtime DLL
@@ -149,12 +153,10 @@ add_executable(vEngineLiteNative
         main.cpp
 )
 
-target_include_directories(vEngineLiteNative PRIVATE
-        "${ANGLE_INCLUDE_DIR}"
-)
+# EXE must be built after Runtime DLL.
+add_dependencies(vEngineLiteNative vEngineRuntime)
 
 target_link_libraries(vEngineLiteNative PRIVATE
-        vEngineRuntime
         ole32
 )
 
@@ -187,7 +189,7 @@ endif()
 
 set(DLL_OUTPUT_DIR "$<TARGET_FILE_DIR:vEngineLiteNative>/dll")
 
-add_custom_command(TARGET vEngineLiteNative POST_BUILD
+add_custom_command(TARGET vEngineRuntime POST_BUILD
 
         COMMAND "${CMAKE_COMMAND}" -E make_directory
         "${DLL_OUTPUT_DIR}"

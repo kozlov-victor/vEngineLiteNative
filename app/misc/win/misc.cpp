@@ -48,21 +48,18 @@ FileContent<std::string> loadFileAsString(const Env* env, const std::string &fil
     const fs::path executablePath = fs::absolute(fs::path(env->exePath));
     const fs::path filePath = executablePath.parent_path() / _clearUrl(fileName);
 
-    // Read the script.
     std::ifstream file(filePath, std::ios::binary);
     if (!file.is_open()) {
-        std::cerr << "Cannot open file: "
-                  << filePath.string() << '\n';
-        return {false,"no file: " + fileName,""};
+        std::cout << "not file.is_open()" << std::endl;
+        return {false,"no such file: " + filePath.string(),""};
     }
-    std::string source{
+    const std::string source{
         std::istreambuf_iterator{file},
         std::istreambuf_iterator<char>{}
     };
     if (source.size() >
         static_cast<size_t>(std::numeric_limits<int>::max())) {
-        std::cerr << "file is too large.\n";
-        return {false,"file is too large: " + fileName,""};
+        return {false,"file is too large: " + filePath.string(),""};
     }
     return {true, "",source};
 }
