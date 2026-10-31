@@ -13,7 +13,8 @@ struct V_COLOR {
 struct Env {
     HWND window;
     HWND canvas;
-    char* exePath;
+    const char* exePath;
+    const char* baseUrl;
     V_COLOR background;
 };
 

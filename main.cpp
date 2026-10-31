@@ -23,31 +23,32 @@ int main(int argc, char* argv[])
 
     const auto runtimePath = dllDir / L"vEngineRuntime.dll";
 
-    HMODULE runtime = LoadLibraryW(runtimePath.c_str());
+    const HMODULE runtime = LoadLibraryW(runtimePath.c_str());
 
     if (!runtime) {
         std::cerr << "Failed to load vEngineRuntime.dll.\n";
         return 1;
     }
 
-    auto createAppWindow = reinterpret_cast<CreateAppWindow>(
+    const auto createAppWindow = reinterpret_cast<CreateAppWindow>(
         GetProcAddress(runtime, "createAppWindow")
     );
 
-    auto updateAppWindow = reinterpret_cast<UpdateAppWindow>(
+    const auto updateAppWindow = reinterpret_cast<UpdateAppWindow>(
         GetProcAddress(runtime, "updateAppWindow")
     );
 
-    auto cleanupAppWindow = reinterpret_cast<CleanupAppWindow>(
+    const auto cleanupAppWindow = reinterpret_cast<CleanupAppWindow>(
         GetProcAddress(runtime, "cleanupAppWindow")
     );
 
     if (!createAppWindow || !updateAppWindow || !cleanupAppWindow) {
         FreeLibrary(runtime);
+        std::cerr << "Failed to find vEngineRuntime exported functions.\n";
         return 1;
     }
 
-    HRESULT hr = CoInitializeEx(
+    const HRESULT hr = CoInitializeEx(
         nullptr,
         COINIT_MULTITHREADED
     );

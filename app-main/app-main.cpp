@@ -12,18 +12,29 @@
 #include "../app/misc/win/env.h"
 #include "../app/misc/win/misc.h"
 #include "../app/misc/win/keyboard/keyboard.h"
+#include "app-main.h"
+#include "VJsonLite.h"
+
 
 using Clock = std::chrono::steady_clock;
 
-#include "app-main.h"
+struct Manifest {
+    int width;
+    int height;
+    std::string title;
+    std::string baseUrl;
+    std::string entry;
+};
+
+using Clock = std::chrono::steady_clock;
 
 static constexpr wchar_t WINDOW_CLASS[] = L"vEngineLiteNativeWindow";
-static constexpr wchar_t WINDOW_TITLE[] = L"vEngineLite Native";
 
 constexpr long targetFps = 60;
 constexpr long long frameDuration = 1000 / targetFps;
 
 VEngine* vEngine;
+Manifest manifest;
 HINSTANCE instance;
 HWND window;
 HWND canvas;
@@ -32,6 +43,25 @@ EGLSurface surface;
 EGLContext context;
 Env env{};
 
+static void loadManifest() {
+    manifest.width = 640;
+    manifest.height = 480;
+    manifest.title = "VEngine";
+    manifest.baseUrl = "";
+    manifest.entry = "index.js";
+    auto [success, err, content] = loadFileAsString(&env, "manifest.json");
+    if (!success) {
+        Logger::info("manifest not ok");
+        return;
+    }
+    auto node = JsonParser::parse(content);
+    manifest.width = node->get("width")->asInt(manifest.width);
+    manifest.height = node->get("width")->asInt(manifest.height);
+    manifest.title = node->get("title")->asString(manifest.title);
+    manifest.entry = node->get("indexJs")->asString(manifest.entry);
+    manifest.baseUrl = node->get("baseUrl")->asString(manifest.baseUrl);
+    env.baseUrl = manifest.baseUrl.c_str();
+}
 
 static LRESULT CALLBACK WindowProc(
     HWND hwnd,
@@ -97,7 +127,7 @@ static LRESULT CALLBACK WindowProc(
     }
 }
 
-static HWND CreateAppWindow(int width, int height) {
+static HWND CreateAppWindow(int width, int height, std::string& title) {
     WNDCLASSEXW wc{};
     wc.cbSize = sizeof(wc);
     wc.style = CS_HREDRAW | CS_VREDRAW;
@@ -118,7 +148,7 @@ static HWND CreateAppWindow(int width, int height) {
     const HWND hwnd = CreateWindowExW(
         0,
         WINDOW_CLASS,
-        WINDOW_TITLE,
+        strToWStr(title).c_str(),
         WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT,
         CW_USEDEFAULT,
@@ -191,11 +221,15 @@ static EGLDisplay CreateEglDisplay() {
 }
 
 bool createAppWindow(char* argv[]) {
-    const int initialWidth = 1280;
-    const int initialHeight = 720;
+
+    env.exePath = argv[0];
+    env.baseUrl = "";
+
+    loadManifest();
 
     instance = GetModuleHandleW(nullptr);
-    window = CreateAppWindow(initialWidth, initialHeight);
+    window = CreateAppWindow(manifest.width, manifest.height, manifest.title);
+    env.window = window;
 
     if (!window) {
         std::cerr << "CreateAppWindow failed.\n";
@@ -203,6 +237,7 @@ bool createAppWindow(char* argv[]) {
     }
 
     HWND canvasWindow = CreateCanvasWindow();
+    env.canvas = canvas;
 
     if (!canvasWindow) {
         DestroyWindow(window);
@@ -340,11 +375,9 @@ bool createAppWindow(char* argv[]) {
               << reinterpret_cast<const char*>(glGetString(GL_RENDERER))
               << '\n';
 
-    env.window = window;
-    env.canvas = canvas;
-    env.exePath = argv[0];
+
     vEngine = new VEngine(&env);
-    JsCompilationResult result = vEngine->initV8(initialWidth, initialHeight);
+    JsCompilationResult result = vEngine->initV8(manifest.width, manifest.height);
     if (!result.success) {
         Logger::error(result.error);
         vEngine->dispose();
@@ -360,7 +393,7 @@ bool createAppWindow(char* argv[]) {
         delete vEngine;
         return false;
     }
-    result = vEngine->compileScript("index.js", content);
+    result = vEngine->compileScript(manifest.entry, content);
     if (!result.success) {
         Logger::error(result.error);
         vEngine->dispose();

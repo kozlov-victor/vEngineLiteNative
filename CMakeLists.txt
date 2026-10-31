@@ -117,8 +117,7 @@ add_library(vEngineRuntime SHARED
         app/misc/win/keyboard/keyboard.h
         app/misc/win/keyboard/keyboard.cpp
 
-        app-main/app-main.cpp
-        app-main/app-main.h
+        app-main/app-main.h app-main/app-main.cpp
 )
 
 target_include_directories(vEngineRuntime PRIVATE

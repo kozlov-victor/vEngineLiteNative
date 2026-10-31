@@ -13,15 +13,15 @@
 namespace fs = std::filesystem;
 
 std::wstring jsStrToWStr(
-    const v8::String::Utf8Value& utf8)
-{
+    const v8::String::Utf8Value& utf8) {
+    if (!*utf8) return L"";
+    return strToWStr(*utf8);
+}
 
-    if (!*utf8) {
-        return L"";
-    }
+std::wstring strToWStr(const std::string& str) {
 
     const int len = MultiByteToWideChar(
-        CP_UTF8, 0, *utf8, -1, nullptr, 0
+        CP_UTF8, 0, str.c_str(), -1, nullptr, 0
     );
 
     if (len <= 0) {
@@ -31,7 +31,7 @@ std::wstring jsStrToWStr(
     std::wstring result(len, L'\0');
 
     MultiByteToWideChar(
-        CP_UTF8, 0, *utf8, -1, result.data(), len
+        CP_UTF8, 0, str.c_str(), -1, result.data(), len
     );
 
     result.pop_back(); // Видаляємо кінцевий '\0'
@@ -44,40 +44,38 @@ static std::string _clearUrl(const std::string &fileName) {
     return fileName.substr(0, queryPos);
 }
 
-FileContent<std::string> loadFileAsString(const Env* env, const std::string &fileName) {
+static fs::path _getFullUrl(const Env* env, const std::string &fileName) {
     const fs::path executablePath = fs::absolute(fs::path(env->exePath));
-    const fs::path filePath = executablePath.parent_path() / _clearUrl(fileName);
+    return executablePath.parent_path() / env->baseUrl / _clearUrl(fileName);
+}
 
+FileContent<std::string> loadFileAsString(const Env* env, const std::string &fileName) {
+    fs::path filePath = _getFullUrl(env,fileName);
     std::ifstream file(filePath, std::ios::binary);
     if (!file.is_open()) {
-        std::cout << "not file.is_open()" << std::endl;
-        return {false,"no such file: " + filePath.string(),""};
+        return {false,"no file: " + filePath.string(),""};
     }
-    const std::string source{
+    std::string source{
         std::istreambuf_iterator{file},
         std::istreambuf_iterator<char>{}
     };
     if (source.size() >
         static_cast<size_t>(std::numeric_limits<int>::max())) {
-        return {false,"file is too large: " + filePath.string(),""};
+        return {false,"file is too large: " + fileName,""};
     }
     return {true, "",source};
 }
 
 FileContent<Bitmap> loadBitmap(const Env *env, const std::string &fileName) {
-    const fs::path executablePath = fs::absolute(fs::path(env->exePath));
-    const fs::path filePath = executablePath.parent_path() / _clearUrl(fileName);
+    fs::path filePath = _getFullUrl(env,fileName);
     std::ifstream file(filePath, std::ios::binary);
     if (!file.is_open()) {
-        std::cerr << "Cannot open file: "
-                  << filePath.string() << '\n';
         return {false,"no file: " + fileName,{}};
     }
     return BitmapCache::loadBitmap(filePath);
 }
 
-void centerChildWindow(HWND parent, HWND child)
-{
+void centerChildWindow(HWND parent, HWND child) {
     RECT parentRect;
     RECT childRect;
 
