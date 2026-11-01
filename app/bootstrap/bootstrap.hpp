@@ -6,22 +6,6 @@ inline const char* bootstrapJs = R"JS(
 
 window = this;
 
-_globalGL.texImage2D = (...args)=>{
-    if (args.length===9) {
-        _globalGL._texImage2D_9(...args);
-    }
-    else if (args.length===6) {
-        args[5] = args[5]._bitmap.$id;
-        _external._texImage2D_6(...args);
-    }
-    else throw new Error('wrong arguments for texImage2D invocation');
-}
-
-alert = (msg)=>{
-    msg= ''+msg;
-    _external._alert(msg,document.title);
-};
-
 //const glNameByName = {};
 //Object.keys(_globalGL).forEach(key=>{
 //    glNameByName[_globalGL[key]] = key;
@@ -47,6 +31,22 @@ alert = (msg)=>{
 //});
 
 (()=>{
+
+    _globalGL.texImage2D = (...args)=>{
+        if (args.length===9) {
+            _globalGL._texImage2D_9(...args);
+        }
+        else if (args.length===6) {
+            args[5] = args[5]._bitmap.$id;
+            _external._texImage2D_6(...args);
+        }
+        else throw new Error('wrong arguments for texImage2D invocation');
+    }
+
+    alert = (msg)=>{
+        msg= ''+msg;
+        _external._alert(msg,document.title);
+    };
 
     const _prepareLogArgs = (args)=>{
         const arr = [];

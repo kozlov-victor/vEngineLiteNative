@@ -314,8 +314,8 @@ void Js::onTouchEvent(const char *event_name, float x, float y, int id) const {
         v8::String::NewFromUtf8(isolate, "pointerId").ToLocalChecked(),
         v8::Integer::New(isolate,id)
     ).Check();
-    v8::Local<v8::Array> touche_object_array = v8::Array::New(isolate, 1);
-    touche_object_array->Set(context_local, 0, touch_object).Check();
+    v8::Local<v8::Array> touch_object_array = v8::Array::New(isolate, 1);
+    touch_object_array->Set(context_local, 0, touch_object).Check();
 
     v8::Local<v8::Object> event = v8::Object::New(isolate);
     event->Set(
@@ -326,12 +326,12 @@ void Js::onTouchEvent(const char *event_name, float x, float y, int id) const {
     event->Set(
         context_local,
         v8::String::NewFromUtf8(isolate, "touches").ToLocalChecked(),
-        touche_object_array
+        touch_object_array
     ).Check();
     event->Set(
         context_local,
         v8::String::NewFromUtf8(isolate, "changedTouches").ToLocalChecked(),
-        touche_object_array
+        touch_object_array
     ).Check();
 
     v8::Local<v8::Value> argv[] = {event};

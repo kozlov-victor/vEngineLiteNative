@@ -14,7 +14,7 @@
 #include "../app/misc/win/keyboard/keyboard.h"
 #include "app-main.h"
 #include "json/VJsonLite.h"
-
+#include "../resources/resources.h"
 
 using Clock = std::chrono::steady_clock;
 
@@ -24,6 +24,7 @@ struct Manifest {
     std::string title;
     std::string baseUrl;
     std::string entry;
+    bool consoleLog;
 };
 
 using Clock = std::chrono::steady_clock;
@@ -49,6 +50,7 @@ static void loadManifest() {
     manifest.title = "VEngine";
     manifest.baseUrl = "";
     manifest.entry = "index.js";
+    manifest.consoleLog = true;
     auto [success, err, content] = loadFileAsString(&env, "manifest.json");
     if (!success) {
         Logger::info("manifest not ok");
@@ -60,7 +62,32 @@ static void loadManifest() {
     manifest.title = node->get("title")->asString(manifest.title);
     manifest.entry = node->get("indexJs")->asString(manifest.entry);
     manifest.baseUrl = node->get("baseUrl")->asString(manifest.baseUrl);
+    manifest.consoleLog = node->get("consoleLog")->asBool(manifest.consoleLog);
     env.baseUrl = manifest.baseUrl.c_str();
+}
+
+static void bindConsole() {
+    if (!AllocConsole()) {
+        return;
+    }
+
+    SetConsoleTitleW(L"vEngineLiteNative Console");
+
+    FILE* stream;
+
+    freopen_s(&stream, "CONOUT$", "w", stdout);
+    freopen_s(&stream, "CONOUT$", "w", stderr);
+    freopen_s(&stream, "CONIN$", "r", stdin);
+
+    SetConsoleOutputCP(CP_UTF8);
+
+    std::ios::sync_with_stdio(true);
+
+    std::cout.clear();
+    std::cerr.clear();
+    std::cin.clear();
+
+    std::cout << "vEngineLiteNative console initialized\n";
 }
 
 static LRESULT CALLBACK WindowProc(
@@ -220,30 +247,82 @@ static EGLDisplay CreateEglDisplay() {
     );
 }
 
+// void setWindowIcon(HWND hwnd, const std::filesystem::path& iconPath) {
+//     HICON icon = static_cast<HICON>(LoadImageW(
+//         nullptr,
+//         iconPath.c_str(),
+//         IMAGE_ICON,
+//         0,
+//         0,
+//         LR_LOADFROMFILE | LR_DEFAULTSIZE
+//     ));
+//
+//     if (!icon) {
+//         return;
+//     }
+//
+//     SendMessageW(hwnd, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(icon));
+//     SendMessageW(hwnd, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(icon));
+// }
+
+void setDefaultWindowIcon(HWND hwnd) {
+    HINSTANCE hInstance = GetModuleHandleW(nullptr);
+
+    HICON iconBig = static_cast<HICON>(
+        LoadImageW(
+            hInstance,
+            MAKEINTRESOURCEW(IDI_ICON1),
+            IMAGE_ICON,
+            32, 32,
+            LR_DEFAULTCOLOR
+        )
+    );
+
+    HICON iconSmall = static_cast<HICON>(
+        LoadImageW(
+            hInstance,
+            MAKEINTRESOURCEW(IDI_ICON1),
+            IMAGE_ICON,
+            16, 16,
+            LR_DEFAULTCOLOR
+        )
+    );
+
+    if (iconBig) {
+        SendMessageW(hwnd, WM_SETICON, ICON_BIG,
+            reinterpret_cast<LPARAM>(iconBig));
+    }
+
+    if (iconSmall) {
+        SendMessageW(hwnd, WM_SETICON, ICON_SMALL,
+            reinterpret_cast<LPARAM>(iconSmall));
+    }
+}
 
 bool createAppWindow() {
     env.baseUrl = "";
 
     loadManifest();
+    if (manifest.consoleLog) bindConsole();
 
     instance = GetModuleHandleW(nullptr);
     window = CreateAppWindow(manifest.width, manifest.height, manifest.title);
-    env.window = window;
 
     if (!window) {
         std::cerr << "CreateAppWindow failed.\n";
         return false;
     }
+    setDefaultWindowIcon(window);
+    env.window = window;
 
     HWND canvasWindow = CreateCanvasWindow();
-    env.canvas = canvas;
-
     if (!canvasWindow) {
         DestroyWindow(window);
         UnregisterClassW(WINDOW_CLASS, instance);
         std::cerr << "canvasWindow failed.\n";
         return false;
     }
+    env.canvas = canvas;
     centerChildWindow(window, canvas);
 
     // Initialize ANGLE / EGL.

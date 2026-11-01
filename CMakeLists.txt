@@ -148,8 +148,9 @@ target_link_libraries(vEngineRuntime PRIVATE
 # Executable
 # ============================================================
 
-add_executable(vEngineLiteNative
+add_executable(vEngineLiteNative WIN32
         main.cpp
+        resources/app.rc
 )
 
 # EXE must be built after Runtime DLL.

@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <shellapi.h>
 #include <iostream>
 #include <filesystem>
 #include <objbase.h>
@@ -7,36 +8,25 @@ using CreateAppWindow = bool(*)();
 using UpdateAppWindow = bool(*)();
 using CleanupAppWindow = void(*)();
 
-void openConsole() {
-    if (!AllocConsole()) {
-        return;
-    }
+int WINAPI wWinMain(
+    HINSTANCE hInstance,
+    HINSTANCE hPrevInstance,
+    PWSTR lpCmdLine,
+    int nCmdShow) {
 
-    SetConsoleTitleW(L"vEngineLiteNative Console");
+    // Parse command line
+    int argc = 0;
 
-    FILE* stream;
+    LPWSTR* wideArgv = CommandLineToArgvW(
+        GetCommandLineW(),
+        &argc
+    );
 
-    freopen_s(&stream, "CONOUT$", "w", stdout);
-    freopen_s(&stream, "CONOUT$", "w", stderr);
-    freopen_s(&stream, "CONIN$", "r", stdin);
-
-    SetConsoleOutputCP(CP_UTF8);
-
-    std::ios::sync_with_stdio(true);
-
-    std::cout.clear();
-    std::cerr.clear();
-    std::cin.clear();
-
-    std::cout << "vEngineLiteNative console initialized\n";
-}
-
-int main(int argc, char* argv[]) {
-    if (argc < 1 || !argv[0]) {
+    if (!wideArgv || argc < 1) {
         return 1;
     }
 
-    const auto exePath = std::filesystem::absolute(argv[0]);
+    const auto exePath = std::filesystem::absolute("./");
     const auto dllDir = exePath.parent_path() / L"dll";
 
     if (!SetDllDirectoryW(dllDir.c_str())) {
