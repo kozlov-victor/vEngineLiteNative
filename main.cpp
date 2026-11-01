@@ -3,12 +3,35 @@
 #include <filesystem>
 #include <objbase.h>
 
-using CreateAppWindow = bool(*)(char*[]);
+using CreateAppWindow = bool(*)();
 using UpdateAppWindow = bool(*)();
 using CleanupAppWindow = void(*)();
 
-int main(int argc, char* argv[])
-{
+void openConsole() {
+    if (!AllocConsole()) {
+        return;
+    }
+
+    SetConsoleTitleW(L"vEngineLiteNative Console");
+
+    FILE* stream;
+
+    freopen_s(&stream, "CONOUT$", "w", stdout);
+    freopen_s(&stream, "CONOUT$", "w", stderr);
+    freopen_s(&stream, "CONIN$", "r", stdin);
+
+    SetConsoleOutputCP(CP_UTF8);
+
+    std::ios::sync_with_stdio(true);
+
+    std::cout.clear();
+    std::cerr.clear();
+    std::cin.clear();
+
+    std::cout << "vEngineLiteNative console initialized\n";
+}
+
+int main(int argc, char* argv[]) {
     if (argc < 1 || !argv[0]) {
         return 1;
     }
@@ -57,7 +80,7 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    if (!createAppWindow(argv)) {
+    if (!createAppWindow()) {
         FreeLibrary(runtime);
         return 1;
     }

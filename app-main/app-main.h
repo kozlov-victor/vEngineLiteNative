@@ -8,7 +8,7 @@
 #endif
 
 extern "C" {
-    VENGINE_API bool createAppWindow(char* argv[]);
+    VENGINE_API bool createAppWindow();
     VENGINE_API bool updateAppWindow();
     VENGINE_API void cleanupAppWindow();
 }

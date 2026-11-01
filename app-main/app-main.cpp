@@ -220,9 +220,8 @@ static EGLDisplay CreateEglDisplay() {
     );
 }
 
-bool createAppWindow(char* argv[]) {
 
-    env.exePath = argv[0];
+bool createAppWindow() {
     env.baseUrl = "";
 
     loadManifest();

@@ -6,7 +6,6 @@
 #include <v8.h>
 #include <filesystem>
 #include <fstream>
-#include <iostream>
 #include "bitmap/bitmap.h"
 #include "../fun.hpp"
 
@@ -38,6 +37,22 @@ std::wstring strToWStr(const std::string& str) {
     return result;
 }
 
+static fs::path getExecutablePath() {
+    wchar_t buffer[MAX_PATH];
+
+    const DWORD length = GetModuleFileNameW(
+        nullptr,
+        buffer,
+        MAX_PATH
+    );
+
+    if (length == 0 || length >= MAX_PATH) {
+        return {};
+    }
+
+    return std::filesystem::path(buffer);
+}
+
 static std::string _clearUrl(const std::string &fileName) {
     // Відкидаємо query-параметри
     const size_t queryPos = fileName.find('?');
@@ -45,8 +60,7 @@ static std::string _clearUrl(const std::string &fileName) {
 }
 
 static fs::path _getFullUrl(const Env* env, const std::string &fileName) {
-    const fs::path executablePath = fs::absolute(fs::path(env->exePath));
-    return executablePath.parent_path() / env->baseUrl / _clearUrl(fileName);
+    return getExecutablePath().parent_path() / env->baseUrl / _clearUrl(fileName);
 }
 
 FileContent<std::string> loadFileAsString(const Env* env, const std::string &fileName) {
