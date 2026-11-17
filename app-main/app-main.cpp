@@ -7,6 +7,8 @@
 
 #include <chrono>
 #include <iostream>
+#include <thread>
+#include <algorithm>
 
 #include "../app/v_engine/v_engine.h"
 #include "../app/misc/win/env.h"
@@ -31,8 +33,7 @@ using Clock = std::chrono::steady_clock;
 
 static constexpr wchar_t WINDOW_CLASS[] = L"vEngineLiteNativeWindow";
 
-constexpr long targetFps = 60;
-constexpr long long frameDuration = 1000 / targetFps;
+constexpr long long frameDuration = 1000 / 60;
 
 VEngine* vEngine;
 Manifest manifest;
@@ -484,18 +485,19 @@ bool createAppWindow() {
 
 
 bool updateAppWindow() {
-    const auto now = std::chrono::duration_cast<std::chrono::milliseconds>(
-        Clock::now().time_since_epoch()
-    ).count();
+    using namespace std::chrono;
 
     MSG message{};
+
     while (PeekMessageW(&message, nullptr, 0, 0, PM_REMOVE)) {
-        if (message.message == WM_QUIT) {
+        if (message.message == WM_QUIT)
             return false;
-        }
+
         TranslateMessage(&message);
         DispatchMessageW(&message);
     }
+
+    const auto lastTime = Clock::now();
 
     RECT clientRect{};
     GetClientRect(canvas, &clientRect);
@@ -505,7 +507,7 @@ bool updateAppWindow() {
 
     if (width > 0 && height > 0) {
 
-        // Execute JavaScript once per frame.
+        // Передаємо час між кадрами в JS.
         vEngine->updateFrame();
 
         if (!eglSwapBuffers(display, surface)) {
@@ -514,12 +516,14 @@ bool updateAppWindow() {
             return false;
         }
     }
-    const auto afterFrame = std::chrono::duration_cast<std::chrono::milliseconds>(
-        Clock::now().time_since_epoch()
-    ).count();
-    const auto deltaFrame = afterFrame - now;
-    const auto deltaSleep = frameDuration - deltaFrame;
-    if (deltaSleep > 0) Sleep(deltaSleep);
+
+    const auto currentTime = Clock::now();
+    const auto frameExecutionTime = currentTime - lastTime;
+    const auto sleepUntilNextFrame = frameDuration - frameExecutionTime.count();
+
+    if (sleepUntilNextFrame < 0) {
+        std::this_thread::sleep_for(milliseconds(sleepUntilNextFrame));
+    }
 
     return true;
 }
