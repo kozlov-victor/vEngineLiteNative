@@ -22,6 +22,7 @@ void ExternalFunctions::create(void* env, v8::Isolate *isolate, v8::Local<v8::Co
         {"_setBgColor", ExternalFunctionImpl::setBgColor},
         {"_setTitle", ExternalFunctionImpl::setTitle},
         {"_getTitle", ExternalFunctionImpl::getTitle},
+        {"_timeMillis", ExternalFunctionImpl::timeMillis},
     };
 
     for(const Fun& f : funcs) {

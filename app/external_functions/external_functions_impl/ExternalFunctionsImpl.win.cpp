@@ -10,17 +10,17 @@
 #include "../../misc/win/bitmap/bitmap.h"
 #include "GLES2/gl2.h"
 #include "ExternalFunctionsImpl.h"
+#include <chrono>
 
 Env* envClosure;
 BitmapCache bitmapCache;
 
 namespace ExternalFunctionImpl {
-
     void createEnvironmentClosure(void* env) {
         envClosure = static_cast<Env*>(env);
     }
 
-     void setSurfaceWidth(const v8::FunctionCallbackInfo<v8::Value>& args) {
+    void setSurfaceWidth(const v8::FunctionCallbackInfo<v8::Value>& args) {
         if (!envClosure) return;
         const int width = getNumericParameter<int>(args, 0);
         if (width <= 0 || !IsWindow(envClosure->canvas)) {
@@ -204,4 +204,15 @@ namespace ExternalFunctionImpl {
         );
         args.GetReturnValue().Set(jsString.ToLocalChecked());
     }
+
+    void timeMillis(const v8::FunctionCallbackInfo<v8::Value>& args) {
+        const auto time = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::steady_clock::now().time_since_epoch()
+        ).count();
+
+        args.GetReturnValue().Set(
+            v8::Number::New(args.GetIsolate(), static_cast<double>(time))
+        );
+    }
+
 }

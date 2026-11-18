@@ -18,6 +18,7 @@ namespace ExternalFunctionImpl {
     void setBgColor(const v8::FunctionCallbackInfo<v8::Value>& args);
     void setTitle(const v8::FunctionCallbackInfo<v8::Value>& args);
     void getTitle(const v8::FunctionCallbackInfo<v8::Value>& args);
+    void timeMillis(const v8::FunctionCallbackInfo<v8::Value>& args);
 }
 
 

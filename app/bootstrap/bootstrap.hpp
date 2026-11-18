@@ -285,7 +285,7 @@ window = this;
     window.innerHeight = innerHeight;
     window.self = window.top = window;
     window.performance = {
-        now:()=>Date.now(),
+        now:()=>_external._timeMillis()
     };
     window.setTimeout = ()=>{};
     window.setInterval = ()=>{};

@@ -29,8 +29,6 @@ struct Manifest {
     bool consoleLog;
 };
 
-using Clock = std::chrono::steady_clock;
-
 static constexpr wchar_t WINDOW_CLASS[] = L"vEngineLiteNativeWindow";
 
 constexpr long long frameDuration = 1000 / 60;
@@ -59,7 +57,7 @@ static void loadManifest() {
     }
     auto node = JsonParser::parse(content);
     manifest.width = node->get("width")->asInt(manifest.width);
-    manifest.height = node->get("width")->asInt(manifest.height);
+    manifest.height = node->get("height")->asInt(manifest.height);
     manifest.title = node->get("title")->asString(manifest.title);
     manifest.entry = node->get("indexJs")->asString(manifest.entry);
     manifest.baseUrl = node->get("baseUrl")->asString(manifest.baseUrl);
